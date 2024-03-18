@@ -3,6 +3,7 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import type { Account, TokenAccount } from '@ledgerhq/types-live';
 import { useBridge } from '../../hooks/useBridge';
 import { useAccountsStore } from '../../store';
+import type { Signer } from '../../types';
 import SignatureStep from './Signature';
 import RecipientStep from './Recipient';
 import SummaryStep from './Summary';
@@ -34,7 +35,12 @@ const SendModal = ({ accountId }: Props) => {
     [accounts, selectedAccount],
   );
 
-  const { transaction, status, updateTransaction, isPending, bridge } = useBridge(mainAccount!);
+  const [signer, setSigner] = useState<Signer>();
+  const { transaction, status, updateTransaction, isPending, bridge, transport, transportError } = useBridge(
+    mainAccount!,
+    undefined,
+    signer,
+  );
 
   const [step, setStep] = useState(0);
   const goNextStep = useCallback(() => {
@@ -106,7 +112,17 @@ const SendModal = ({ accountId }: Props) => {
         />
       )}
       {step === 3 && (
-        <SignatureStep transaction={transaction} account={mainAccount!} bridge={bridge} status={status!} />
+        <SignatureStep
+          transaction={transaction}
+          account={mainAccount!}
+          bridge={bridge}
+          isPending={isPending}
+          status={status!}
+          signer={signer}
+          setSigner={setSigner}
+          transport={transport}
+          transportError={transportError}
+        />
       )}
     </>
   );

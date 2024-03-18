@@ -6,16 +6,37 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { buildAccountBridge } from '@ledgerhq/coin-evm/lib/bridge/js';
 import type { Transaction, TransactionStatus } from '@ledgerhq/coin-evm/lib/types/transaction';
 import { openNanoApp } from '../helpers';
+import type { Signer } from '../types';
+import type Transport from '@ledgerhq/hw-transport';
 
-export const useBridge = (account: Account, _transaction?: Transaction) => {
+export const useBridge = (account: Account, _transaction?: Transaction, signer?: Signer | undefined) => {
+  const [transport, setTransport] = useState<Transport | undefined>(undefined);
+  const [transportError, setTransportError] = useState<Error | undefined>();
+  useEffect(() => {
+    if (!signer) return;
+
+    if (signer.type !== 'webauthn') {
+      openNanoApp(account.currency.managerAppName, signer.type).then(([trans, transErr]) => {
+        if (trans) {
+          setTransport(trans);
+        }
+        if (transErr) {
+          setTransportError(transErr);
+        }
+      });
+    }
+  }, [account.currency.managerAppName, signer]);
+
   const bridge = useMemo(
     () =>
       buildAccountBridge(async (deviceId: string, fn) => {
-        const transport = await openNanoApp(account.currency.managerAppName, 'ledger-usb');
-        const signer = new Eth(transport);
-        return fn(signer);
+        if (signer && signer?.type !== 'webauthn' && transport) {
+          const app = new Eth(transport);
+          return fn(app);
+        }
+        return fn({} as any);
       }),
-    [],
+    [signer, transport],
   );
   const [isPending, setIsPending] = useState(false);
   const [transaction, setTransaction] = useState<Transaction>(_transaction || bridge.createTransaction(account));
@@ -57,5 +78,7 @@ export const useBridge = (account: Account, _transaction?: Transaction) => {
     status,
     isPending,
     setIsPending,
+    transport,
+    transportError,
   };
 };

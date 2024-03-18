@@ -1,19 +1,37 @@
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import type Transport from '@ledgerhq/hw-transport';
+import { memo, useEffect, useMemo, useState } from 'react';
 import type { Transaction, TransactionStatus } from '@ledgerhq/coin-evm/lib/types/transaction';
 import getDeviceTransactionConfig from '@ledgerhq/coin-evm/lib/deviceTransactionConfig';
 import type { Account, AccountBridge, SignedOperation } from '@ledgerhq/types-live';
 import RoundCheck from '../../components/icons/RoundCheck';
 import { useAccountsStore, useModalStore } from '../../store';
 import { theme } from '../../config';
+import { SignerOptions } from '../../helpers';
+import { Signer } from '../../types';
 
 type Props = {
   transaction: Transaction;
   account: Account;
   bridge: AccountBridge<Transaction>;
+  isPending: boolean;
   status: TransactionStatus;
+  signer: Signer | undefined;
+  setSigner: (transport: Signer | undefined) => void;
+  transport: Transport | undefined;
+  transportError: Error | undefined;
 };
 
-const SignatureStep = ({ transaction, account, bridge, status }: Props) => {
+const SignatureStep = ({
+  transaction,
+  account,
+  bridge,
+  status,
+  isPending,
+  signer,
+  setSigner,
+  transport,
+  transportError,
+}: Props) => {
   const { updateAccount } = useAccountsStore();
   const [signedOperation, setSignedOperation] = useState<SignedOperation | undefined>();
   const [error, setError] = useState<Error | undefined>();
@@ -23,9 +41,10 @@ const SignatureStep = ({ transaction, account, bridge, status }: Props) => {
     [account, status, transaction],
   );
 
-  const signOperation = useCallback(() => {
+  useEffect(() => {
+    if (!transport || isPending) return;
     setError(undefined);
-    return bridge.signOperation({ account, deviceId: '', transaction }).subscribe({
+    bridge.signOperation({ account, deviceId: '', transaction }).subscribe({
       next: (res) => {
         if (res.type === 'signed') {
           setSignedOperation(res.signedOperation);
@@ -36,11 +55,7 @@ const SignatureStep = ({ transaction, account, bridge, status }: Props) => {
         setError(err);
       },
     });
-  }, [account, bridge, transaction]);
-
-  useEffect(() => {
-    signOperation();
-  }, []);
+  }, [account, bridge, isPending, transport, transaction]);
 
   const [isBroadcasted, setIsBroadcasted] = useState(false);
   useEffect(() => {
@@ -77,11 +92,49 @@ const SignatureStep = ({ transaction, account, bridge, status }: Props) => {
           </div>
         </>
       ) : null}
-      {!signedOperation && !error ? (
+      {!signer && (
+        <>
+          <div className="text-lg pb-4 text-center">Pick a Signer :</div>
+          <div className="flex flex-row gap-4 py-4 px-6">
+            {SignerOptions.map((option) => (
+              <button
+                key={option.type}
+                onClick={() => {
+                  setSigner(option);
+                }}
+                disabled={!option.enabled}
+                className="btn aspect-square flex-1 text-center disabled:pointer-events-auto disabled:cursor-not-allowed hover:border hover:border-accent"
+              >
+                <span>{option.name}</span>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+      {signer && !transport && (
+        <>
+          <div className="text-lg p-10 pb-12 text-center">
+            Openning the Nano app... <span className="loading loading-ring loading-xs" />
+            {(transportError?.message?.includes('user gesture') || transportError?.message?.includes('GATT')) && (
+              <div>
+                <button className="btn btn-primary m-4" onClick={() => setSigner({ ...signer })}>
+                  Reconnect {signer.name}
+                </button>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+      {!signedOperation && !error && signer && signer?.type !== 'webauthn' && transport ? (
         <>
           <div className="px-6">
             <div className="flex flex-row justify-center items-center">
               <div className="px-3">
+                <div className="flex flex-row items justify-center mb-4">
+                  <button className="btn btn-ghost outline-accent outline-none" onClick={() => setSigner(undefined)}>
+                    {signer.name}
+                  </button>
+                </div>
                 <div className="font-bold mb-14 text-center">
                   Please confirm the operation on your device to finalize it
                 </div>
@@ -121,7 +174,10 @@ const SignatureStep = ({ transaction, account, bridge, status }: Props) => {
                 <div className="font-bold mb-4 text-center">Transaction has been rejected</div>
                 <button
                   className="btn btn-neutral border border-primary hover:btn-primary px-10"
-                  onClick={signOperation}
+                  onClick={() => {
+                    setError(undefined);
+                    setSigner(undefined);
+                  }}
                 >
                   Retry
                 </button>

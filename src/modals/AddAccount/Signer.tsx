@@ -1,8 +1,8 @@
-import { memo, useEffect } from 'react';
-import type { CryptoCurrency } from '@ledgerhq/types-cryptoassets';
-import { openNanoApp } from '../../helpers';
-import { Signer } from '../../types';
 import classNames from 'classnames';
+import { memo, useEffect, useState } from 'react';
+import type { CryptoCurrency } from '@ledgerhq/types-cryptoassets';
+import { SignerOptions, openNanoApp } from '../../helpers';
+import type { Signer } from '../../types';
 
 type Props = {
   currency: CryptoCurrency;
@@ -11,34 +11,17 @@ type Props = {
   goNextStep: () => void;
 };
 
-const SignerOptions: Signer[] = [
-  {
-    type: 'ledger-usb',
-    name: 'USB',
-    enabled: true,
-  },
-  {
-    type: 'ledger-ble',
-    name: 'Bluetooth',
-    enabled: true,
-  },
-  {
-    type: 'webauthn',
-    name: 'Webauthn',
-    enabled: false,
-  },
-];
-
 const SignerStep = ({ currency, signer, setSigner, goNextStep }: Props) => {
+  const [transportError, setTransportError] = useState<Error | undefined>();
   useEffect(() => {
     if (signer) {
       if (signer.type !== 'webauthn') {
         if (!signer.transport) {
-          openNanoApp(currency.managerAppName, signer.type).then((transport) => {
-            setSigner({
-              ...signer,
-              transport,
-            });
+          openNanoApp(currency.managerAppName, signer.type).then(([transport, transErr]) => {
+            if (transport) {
+              setSigner({ ...signer, transport });
+            }
+            setTransportError(transErr || undefined);
           });
         }
       } else {
@@ -69,19 +52,25 @@ const SignerStep = ({ currency, signer, setSigner, goNextStep }: Props) => {
       </div>
       <hr className="border-zinc-700 my-4" />
       <div className="px-6 flex flew-row justify-end">
-        <button
-          className="btn btn-primary"
-          onClick={goNextStep}
-          disabled={!signer || !!(signer.type !== 'webauthn' && !signer?.transport)}
-        >
-          {signer && signer.type !== 'webauthn' && !signer?.transport ? (
-            <span className="inline-flex flex-row items-center gap-2">
-              Waiting for transport... <span className="loading loading-ring loading-xs" />
-            </span>
-          ) : (
-            'Continue'
-          )}
-        </button>
+        {!(transportError?.message?.includes('user gesture') || transportError?.message?.includes('GATT')) ? (
+          <button
+            className="btn btn-primary"
+            onClick={goNextStep}
+            disabled={!signer || !!(signer.type !== 'webauthn' && !signer?.transport)}
+          >
+            {signer && signer.type !== 'webauthn' && !signer?.transport ? (
+              <span className="inline-flex flex-row items-center gap-2">
+                Openning the Nano app... <span className="loading loading-ring loading-xs" />
+              </span>
+            ) : (
+              'Continue'
+            )}
+          </button>
+        ) : (
+          <button className="btn btn-neutral outline-none outline-primary" onClick={() => setSigner({ ...signer! })}>
+            Reconnect {signer!.name}
+          </button>
+        )}
       </div>
     </>
   );

@@ -141,9 +141,10 @@ useCurrencyPriceStore.subscribe((state, previousState) => {
 
 type ModalStore = {
   isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
   modalName: string;
   modalParams?: any;
-  openModal: (modalName: string, params: any) => void;
+  openModal: (modalName: string, params?: any) => void;
   closeModal: () => void;
 };
 
@@ -151,6 +152,9 @@ export const useModalStore = create<ModalStore>()(
   devtools(
     subscribeWithSelector((set) => ({
       isOpen: false,
+      setIsOpen(isOpen) {
+        set(() => ({ isOpen }));
+      },
       modalName: '',
       modalParams: null,
       openModal(modalName, params) {
