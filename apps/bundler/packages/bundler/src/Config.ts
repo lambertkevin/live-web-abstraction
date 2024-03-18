@@ -1,9 +1,9 @@
 import ow from 'ow'
 import fs from 'fs'
-
-import { BundlerConfig, bundlerConfigDefault, BundlerConfigShape } from './BundlerConfig'
 import { Wallet, Signer } from 'ethers'
 import { BaseProvider, JsonRpcProvider } from '@ethersproject/providers'
+import { BundlerConfig, bundlerConfigDefault, BundlerConfigShape } from './BundlerConfig'
+import localConfig from "../localconfig/bundler.config";
 
 function getCommandLineParams (programOpts: any): Partial<BundlerConfig> {
   const params: any = {}
@@ -36,11 +36,8 @@ export function getNetworkProvider (url: string): JsonRpcProvider {
 export async function resolveConfiguration (programOpts: any): Promise<{ config: BundlerConfig, provider: BaseProvider, wallet: Signer }> {
   const commandLineParams = getCommandLineParams(programOpts)
   let fileConfig: Partial<BundlerConfig> = {}
-  const configFileName = programOpts.config
-  if (fs.existsSync(configFileName)) {
-    fileConfig = JSON.parse(fs.readFileSync(configFileName, 'ascii'))
-  }
-  const config = mergeConfigs(bundlerConfigDefault, fileConfig, commandLineParams)
+  
+  const config = mergeConfigs(bundlerConfigDefault, localConfig, commandLineParams)
   console.log('Merged configuration:', JSON.stringify(config))
 
   if (config.network === 'hardhat') {
@@ -53,10 +50,9 @@ export async function resolveConfiguration (programOpts: any): Promise<{ config:
   let mnemonic: string
   let wallet: Wallet
   try {
-    mnemonic = fs.readFileSync(config.mnemonic, 'ascii').trim()
-    wallet = Wallet.fromMnemonic(mnemonic).connect(provider)
+    wallet = new Wallet(config.privateKey).connect(provider);
   } catch (e: any) {
-    throw new Error(`Unable to read --mnemonic ${config.mnemonic}: ${e.message as string}`)
+    throw new Error(`Unable to read --privateKey ${config.privateKey}: ${e.message as string}`)
   }
   return { config, provider, wallet }
 }

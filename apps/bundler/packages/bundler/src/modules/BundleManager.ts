@@ -1,10 +1,11 @@
-import { MempoolManager } from './MempoolManager'
-import { ValidateUserOpResult, ValidationManager } from '@account-abstraction/validation-manager'
-import { BigNumber, BigNumberish } from 'ethers'
-import { JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers'
+import axios from 'axios'
 import Debug from 'debug'
-import { ReputationManager, ReputationStatus } from './ReputationManager'
 import { Mutex } from 'async-mutex'
+import { MempoolManager } from './MempoolManager'
+import { ethers, BigNumber, BigNumberish } from 'ethers'
+import { FeeData, JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers'
+import { ValidateUserOpResult, ValidationManager } from '@account-abstraction/validation-manager'
+import { ReputationManager, ReputationStatus } from './ReputationManager'
 import { GetUserOpHashes__factory } from '../types'
 import {
   UserOperation,
@@ -19,6 +20,24 @@ import { ErrorDescription } from '@ethersproject/abi/lib/interface'
 const debug = Debug('aa.exec.cron')
 
 const THROTTLED_ENTITY_BUNDLE_COUNT = 4
+
+type PolygonGasStationRequest = {
+  safeLow: {
+    maxPriorityFee: number,
+    maxFee: number
+  },
+  standard: {
+    maxPriorityFee: number,
+    maxFee: number
+  },
+  fast: {
+    maxPriorityFee: number,
+    maxFee: number
+  },
+  estimatedBaseFee: number,
+  blockTime: number,
+  blockNumber: number
+}
 
 export interface SendBundleReturn {
   transactionHash: string
@@ -83,7 +102,16 @@ export class BundleManager {
    */
   async sendBundle (userOps: UserOperation[], beneficiary: string, storageMap: StorageMap): Promise<SendBundleReturn | undefined> {
     try {
-      const feeData = await this.provider.getFeeData()
+      const feeData = this.provider.network.chainId !== 137
+        ? await this.provider.getFeeData()
+        : await axios.get<PolygonGasStationRequest>("https://gasstation.polygon.technology/v2")
+          .then(({ data }) => ({
+            lastBaseFeePerGas: ethers.utils.formatUnits(data.estimatedBaseFee, "gwei"),
+            maxFeePerGas:ethers.utils.formatUnits(data.standard.maxFee, "gwei"),
+            maxPriorityFeePerGas: ethers.utils.formatUnits(data.standard.maxPriorityFee, "gwei"),
+            gasPrice: null
+          }))
+
       const tx = await this.entryPoint.populateTransaction.handleOps(userOps.map(packUserOp), beneficiary, {
         type: 2,
         nonce: await this.signer.getTransactionCount(),

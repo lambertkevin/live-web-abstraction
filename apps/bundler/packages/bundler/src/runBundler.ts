@@ -28,14 +28,12 @@ ethers.BigNumber.prototype[inspectCustomSymbol] = function () {
   return `BigNumber ${parseInt(this._hex)}`
 }
 
-const CONFIG_FILE_NAME = 'workdir/bundler.config.json'
-
 export let showStackTraces = false
 
 export async function connectContracts (
   wallet: Signer,
   entryPointAddress: string): Promise<{ entryPoint: IEntryPoint }> {
-  const entryPoint = await deployEntryPoint(wallet.provider as any, wallet as any)
+  const entryPoint = await deployEntryPoint(wallet.provider as any, wallet as any, entryPointAddress)
   return {
     entryPoint
   }
@@ -71,7 +69,6 @@ export async function runBundler (argv: string[], overrideExit = true): Promise<
     .option('--mnemonic <file>', 'mnemonic/private-key file of signer account')
     .option('--entryPoint <string>', 'address of the supported EntryPoint contract')
     .option('--port <number>', `server listening port (default: ${bundlerConfigDefault.port})`)
-    .option('--config <string>', 'path to config file', CONFIG_FILE_NAME)
     .option('--auto', 'automatic bundling (bypass config.autoBundleMempoolSize)', false)
     .option('--unsafe', 'UNSAFE mode: no storage or opcode checks (safe mode requires geth)')
     .option('--debugRpc', 'enable debug rpc methods (auto-enabled for test node')
@@ -96,7 +93,7 @@ export async function runBundler (argv: string[], overrideExit = true): Promise<
     process.exit(1)
   }
   const { config, provider, wallet } = await resolveConfiguration(programOpts)
-
+  console.log({ config });
   const {
     // name: chainName,
     chainId
