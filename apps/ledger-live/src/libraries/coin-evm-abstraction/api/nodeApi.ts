@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { BigNumber } from 'bignumber.js';
 import { deepHexlify, packUserOp } from '../../../helpers';
 import { entrypointContract } from '../../../contracts';
@@ -41,10 +42,26 @@ export const getNonce = async (address: string): Promise<number> => entrypointCo
 
 export const getFeeData = async () => provider.getFeeData();
 
+export const getPaymasterAndData = async (userOp: UserOperation) =>
+  axios
+    .post<{
+      paymaster: `0x${string}`;
+      paymasterData: `0x${string}`;
+      paymasterVerificationGasLimit: `0x${string}`;
+      paymasterPostOpGasLimit: `0x${string}`;
+    }>(import.meta.env.VITE_PAYMASTER, userOp)
+    .then(({ data: { paymaster, paymasterData, paymasterVerificationGasLimit, paymasterPostOpGasLimit } }) => ({
+      paymaster,
+      paymasterData: Buffer.from(paymasterData.slice(2), 'hex'),
+      paymasterVerificationGasLimit: new BigNumber(paymasterVerificationGasLimit),
+      paymasterPostOpGasLimit: new BigNumber(paymasterPostOpGasLimit),
+    }));
+
 export default {
   getGasEstimation,
   hasCode,
   getUserOpHash,
   getNonce,
   getFeeData,
+  getPaymasterAndData,
 };

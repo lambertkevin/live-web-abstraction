@@ -43,6 +43,7 @@ services:
     environment:
       - VITE_NETWORK=${RPC}
       - VITE_BUNDLER=${BUNDLER}
+      - VITE_PAYMASTER=${PAYMASTER}
       - VITE_ENTRYPOINT=${ENTRYPOINT_CONTRACT}
       - VITE_WALLETFACTORY_CONTRACT=${FACTORY_CONTRACT}
     working_dir: /app

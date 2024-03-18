@@ -8,6 +8,7 @@ import { iconsList } from './icons';
 import classNames from 'classnames';
 import { theme } from '../config';
 import ChevronUp from './icons/ChevronUp';
+import BigNumber from 'bignumber.js';
 
 type Props = {
   account: AccountWithSigners | TokenAccount;
@@ -148,6 +149,8 @@ const OperationsHistory = ({ account }: Props) => {
               const isLastOp = i === ops.length - 1;
               const isInOp = ['IN', 'NFT_IN'].includes(op.type);
               const isNFTOp = ['NFT_IN', 'NFT_OUT'].includes(op.type);
+              const isSponsored = (op.extra as { sponsored?: boolean })?.sponsored;
+              const sponsoredFees = (op.extra as { sponsoredFees?: BigNumber })?.sponsoredFees;
               const currency = account.type === 'Account' ? account.currency : account.token;
 
               return (
@@ -176,8 +179,16 @@ const OperationsHistory = ({ account }: Props) => {
                   <div className="w-3/12">{op.recipients}</div>
                   <div className="w-4/12"></div>
                   <div className="flex-grow text-right">
-                    {!op.value.isZero() && !isNFTOp ? (
+                    {(!op.value.isZero() || isSponsored) && !isNFTOp ? (
                       <>
+                        {isSponsored ? (
+                          <div className="badge badge-accent uppercase text-xs">
+                            sponsored
+                            {sponsoredFees
+                              ? ` (${parseFloat(sponsoredFees.dividedBy(10 ** currency.units[0].magnitude).toFixed(8))} ${currency.units[0].code})`
+                              : null}
+                          </div>
+                        ) : null}
                         <div className={isInOp ? 'text-lime-500' : ''}>
                           {isInOp ? '+' : '-'}
                           {parseFloat(op.value.dividedBy(10 ** currency.units[0].magnitude).toFixed(8))}{' '}

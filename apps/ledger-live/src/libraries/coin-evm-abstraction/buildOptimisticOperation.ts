@@ -11,7 +11,7 @@ export const buildOptimisticOperation = (
 ): Operation => {
   const type = transactionType ?? 'OUT';
   const estimatedFees = getEstimatedFees(transaction);
-  const value = transaction.amount.plus(estimatedFees);
+  const value = transaction.amount.plus(!transaction.paymasterData ? estimatedFees : 0);
 
   // keys marked with a <-- will be updated by the broadcast method
   const operation: Operation = {
@@ -29,7 +29,10 @@ export const buildOptimisticOperation = (
     subOperations: [],
     nftOperations: [],
     date: new Date(),
-    extra: {},
+    extra: {
+      sponsored: !!transaction.paymasterData,
+      sponsoredFees: transaction.paymasterData ? estimatedFees : null,
+    },
   };
 
   return operation;

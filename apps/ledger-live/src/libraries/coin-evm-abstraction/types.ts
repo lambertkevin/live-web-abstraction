@@ -22,5 +22,5 @@ export type EvmAbstractionTransaction = TransactionCommon & {
   maxPriorityFeePerGas: BigNumber;
   gasOptions?: GasOptions;
   chainId: number;
-  signer: Signer;
+  signer?: Signer;
 };

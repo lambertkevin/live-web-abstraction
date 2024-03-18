@@ -21,10 +21,5 @@ export const createTransaction: AccountBridge<EvmAbstractionTransaction>['create
     maxFeePerGas: new BigNumber(0),
     maxPriorityFeePerGas: new BigNumber(0),
     chainId: currency.ethereumLikeInfo?.chainId || 0,
-    signer: {
-      name: 'Webauthn',
-      type: 'webauthn',
-      enabled: true,
-    },
   };
 };

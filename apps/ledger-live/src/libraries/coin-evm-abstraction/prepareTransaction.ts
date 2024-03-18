@@ -1,18 +1,20 @@
 import { ethers } from 'ethers';
 import { BigNumber } from 'bignumber.js';
 import type { AccountBridge, TokenAccount } from '@ledgerhq/types-live';
-import { SignatureCurveType, SignatureDryRun, SignatureMessageType, getSignatureType } from '../../helpers';
+import { accountInterface, erc20Interface, factoryContract } from '../../contracts';
 import { transactionToUserOperation } from './adapters/userOperation';
-import { validateRecipient } from './getTransactionStatus';
 import type { EvmAbstractionTransaction } from './types';
-import accountAbi from '../../abis/Account.abi.json';
-import { factoryContract } from '../../contracts';
-import erc20Abi from '../../abis/ERC20.abi.json';
 import { Signer } from '../../types';
 import nodeApi from './api/nodeApi';
+import {
+  SignatureCurveType,
+  SignatureDryRun,
+  SignatureMessageType,
+  deepHexlify,
+  getSignatureType,
+} from '../../helpers';
 
-const accountInterface = new ethers.utils.Interface(accountAbi);
-const erc20Interface = new ethers.utils.Interface(erc20Abi);
+const ethAddressRegEx = /^(0x)?[0-9a-fA-F]{40}$/;
 
 const dryRunSignatureBySigner: Record<EvmAbstractionTransaction['signer']['type'], Buffer> = {
   'ledger-usb': Buffer.from(
@@ -86,14 +88,14 @@ export const prepareTransaction: AccountBridge<EvmAbstractionTransaction>['prepa
         factory: import.meta.env.VITE_WALLETFACTORY_CONTRACT,
         factoryData: Buffer.from(
           factoryContract.interface
-            .encodeFunctionData('createAccount', [username, domain, 0, craftAddSignerPayload(transaction.signer)])
+            .encodeFunctionData('createAccount', [username, domain, 0, craftAddSignerPayload(transaction.signer!)])
             .slice(2),
           'hex',
         ),
       }
     : {};
 
-  const callData = validateRecipient(account, transaction)
+  const callData = transaction.recipient.match(ethAddressRegEx)
     ? Buffer.from(
         accountInterface
           .encodeFunctionData(
@@ -123,9 +125,23 @@ export const prepareTransaction: AccountBridge<EvmAbstractionTransaction>['prepa
     maxFeePerGas: new BigNumber(feeData.maxFeePerGas!.toHexString()),
   };
 
-  const userOp = transactionToUserOperation(account, draftTransaction);
+  const dryRunSignature = dryRunSignatureBySigner[draftTransaction.signer?.type || ''] || Buffer.alloc(0);
+  const draftUserOpForEstimation = transactionToUserOperation(
+    account,
+    draftTransaction,
+    `0x${dryRunSignature.toString('hex')}`,
+  );
+  const paymasterParams = shouldDeployAccount
+    ? await nodeApi.getPaymasterAndData(deepHexlify(draftUserOpForEstimation))
+    : {};
+
+  const userOp = transactionToUserOperation(
+    account,
+    { ...paymasterParams, ...draftTransaction },
+    `0x${dryRunSignature.toString('hex')}`,
+  );
   const { callGasLimit, preVerificationGas, verificationGasLimit } = await nodeApi
-    .getGasEstimation({ ...userOp, signature: dryRunSignatureBySigner[draftTransaction.signer?.type] })
+    .getGasEstimation(userOp)
     .catch((e) => {
       console.log(e);
       return {
@@ -142,6 +158,7 @@ export const prepareTransaction: AccountBridge<EvmAbstractionTransaction>['prepa
   });
 
   return {
+    ...paymasterParams,
     ...draftTransaction,
     callGasLimit,
     preVerificationGas,

@@ -5,6 +5,7 @@ import type { AccountWithSigners, UserOperation } from '../../../types';
 export const transactionToUserOperation = (
   account: AccountWithSigners,
   tx: EvmAbstractionTransaction,
+  signature?: string,
 ): UserOperation => {
   return {
     sender: account.freshAddress,
@@ -25,6 +26,6 @@ export const transactionToUserOperation = (
       ? BigNumber.from(tx.paymasterPostOpGasLimit.toString())
       : undefined,
     paymasterData: tx.paymasterData || undefined,
-    signature: Buffer.from('', 'hex'),
+    signature: signature && signature !== '0x' ? Buffer.from(signature.slice(2), 'hex') : Buffer.alloc(0),
   };
 };
