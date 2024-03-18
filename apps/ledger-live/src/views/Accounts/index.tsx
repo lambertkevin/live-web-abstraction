@@ -20,9 +20,14 @@ const Accounts = () => {
       <div className="flex justify-between mb-5">
         <h1 className="text-2xl">Accounts</h1>
         {accounts.length ? (
-          <button className="btn btn-primary text-sm min-h-0 h-auto" onClick={() => openModal('addAccount', {})}>
-            <Plus /> Add account
-          </button>
+          <div className="flex flew-row gap-2">
+            <button className="btn btn-primary text-sm min-h-0 h-auto" onClick={() => openModal('AddAccount', {})}>
+              <Plus /> Add account
+            </button>
+            <button className="btn btn-accent text-sm min-h-0 h-auto" onClick={() => openModal('AddSmartAccount', {})}>
+              <Plus /> Add Smart Account
+            </button>
+          </div>
         ) : null}
       </div>
       {accounts.length ? (
@@ -35,12 +40,14 @@ const Accounts = () => {
         </div>
       ) : (
         <div className="flex flex-col flex-grow items-center justify-center">
-          <button
-            className="btn btn-primary border-primary border-dashed hover:border-primary text-lg p-4 animate-bounce"
-            onClick={() => openModal('addAccount', {})}
-          >
-            <Plus /> Add account
-          </button>
+          <div className="flex flex-row gap-4">
+            <button className="btn btn-primary text-lg p-4" onClick={() => openModal('AddAccount', {})}>
+              <Plus /> Add account
+            </button>
+            <button className="btn btn-accent text-lg p-4" onClick={() => openModal('AddSmartAccount', {})}>
+              <Plus /> Add Smart Account
+            </button>
+          </div>
         </div>
       )}
     </div>

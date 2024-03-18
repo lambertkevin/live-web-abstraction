@@ -5,12 +5,13 @@ import { DateTime } from 'luxon';
 import { memo, useMemo } from 'react';
 import { BigNumber } from 'bignumber.js';
 import { ResponsiveLine } from '@nivo/line';
-import type { Account, Operation, TokenAccount } from '@ledgerhq/types-live';
+import type { Operation, TokenAccount } from '@ledgerhq/types-live';
+import type { AccountWithSigners } from '../types';
 import { useCurrencyPriceStore } from '../store';
 import { theme } from '../config';
 
 type Props = {
-  account: Account | TokenAccount;
+  account: AccountWithSigners | TokenAccount;
 };
 
 const Graph = ({ account }: Props) => {

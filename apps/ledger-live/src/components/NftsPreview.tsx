@@ -1,10 +1,11 @@
 import groupBy from 'lodash/groupBy';
 import { memo, useEffect, useState } from 'react';
-import type { Account, TokenAccount, NFT } from '@ledgerhq/types-live';
+import type { NFT } from '@ledgerhq/types-live';
 import { buildCurrencyBridge } from '@ledgerhq/coin-evm/lib/bridge/js';
+import { AccountWithSigners } from '../types';
 
 type Props = {
-  account: Account | TokenAccount;
+  account: AccountWithSigners;
 };
 
 const NftsPreview = ({ account }: Props) => {
@@ -31,7 +32,7 @@ const NftsPreview = ({ account }: Props) => {
         ),
       );
     })();
-  }, [account.nfts, account.currency]);
+  }, [account.nfts, account.currency, account.type]);
 
   return (
     <div className="bg-zinc-900 rounded py-5">

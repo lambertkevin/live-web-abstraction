@@ -111,8 +111,12 @@ const Account = () => {
       </div>
       <Graph account={account} />
       {account?.type === 'Account' && account.nfts?.length ? <NftsPreview account={account} /> : null}
-      {account?.type === 'Account' ? <TokenAccountsPreview account={account} /> : null}
-      <OperationsHistory account={account} />
+      {account?.type === 'Account' && account.subAccounts?.length ? <TokenAccountsPreview account={account} /> : null}
+      {account.operations.length || account.pendingOperations.length ? (
+        <OperationsHistory account={account} />
+      ) : (
+        <div className="text-lg text-center">No operations yet :(</div>
+      )}
     </div>
   );
 };

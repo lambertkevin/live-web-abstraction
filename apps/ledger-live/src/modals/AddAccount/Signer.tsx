@@ -1,7 +1,7 @@
 import classNames from 'classnames';
 import { memo, useEffect, useState } from 'react';
 import type { CryptoCurrency } from '@ledgerhq/types-cryptoassets';
-import { SignerOptions, openNanoApp } from '../../helpers';
+import { SignerOption, SignerOptions, openNanoApp } from '../../helpers';
 import type { Signer } from '../../types';
 
 type Props = {
@@ -13,19 +13,19 @@ type Props = {
 
 const SignerStep = ({ currency, signer, setSigner, goNextStep }: Props) => {
   const [transportError, setTransportError] = useState<Error | undefined>();
+  const [selectedOption, setSelectedOption] = useState<SignerOption | undefined>();
+
   useEffect(() => {
     if (signer) {
-      if (signer.type !== 'webauthn') {
+      if (signer.mode === 'EOA') {
         if (!signer.transport) {
-          openNanoApp(currency.managerAppName, signer.type).then(([transport, transErr]) => {
+          openNanoApp('Ethereum', signer.type).then(([transport, transErr]) => {
             if (transport) {
               setSigner({ ...signer, transport });
             }
             setTransportError(transErr || undefined);
           });
         }
-      } else {
-        alert('NOT YET');
       }
     }
   }, [currency.managerAppName, setSigner, signer]);
@@ -33,21 +33,28 @@ const SignerStep = ({ currency, signer, setSigner, goNextStep }: Props) => {
   return (
     <>
       <div className="px-6">
-        <h1 className="text-lg pb-4 text-center">Pick a Signer for you {currency.name} account</h1>
+        <h1 className="text-lg pb-4 text-center">Pick a Signer for your {currency.name} account</h1>
         <div className="flex flex-row gap-4 py-4">
-          {SignerOptions.map((option) => (
-            <button
-              key={option.type}
-              onClick={() => setSigner(option)}
-              disabled={!option.enabled}
-              className={classNames([
-                'btn aspect-square flex-1 text-center disabled:pointer-events-auto disabled:cursor-not-allowed hover:border hover:border-accent',
-                signer?.type === option.type ? 'btn-accent' : '',
-              ])}
-            >
-              <span>{option.name}</span>
-            </button>
-          ))}
+          {SignerOptions.map((option) =>
+            option.mode === 'EOA' ? (
+              <button
+                key={option.type}
+                onClick={() => {
+                  setSelectedOption(option);
+                  setSigner({
+                    type: option.type,
+                    mode: option.mode,
+                  } as Signer);
+                }}
+                className={classNames([
+                  'btn aspect-square flex-1 text-center disabled:pointer-events-auto disabled:cursor-not-allowed hover:border hover:border-accent',
+                  signer?.type === option.type ? 'btn-accent' : '',
+                ])}
+              >
+                <span>{option.name}</span>
+              </button>
+            ) : null,
+          )}
         </div>
       </div>
       <hr className="border-zinc-700 my-4" />
@@ -68,7 +75,7 @@ const SignerStep = ({ currency, signer, setSigner, goNextStep }: Props) => {
           </button>
         ) : (
           <button className="btn btn-neutral outline-none outline-primary" onClick={() => setSigner({ ...signer! })}>
-            Reconnect {signer!.name}
+            Reconnect {selectedOption!.name}
           </button>
         )}
       </div>

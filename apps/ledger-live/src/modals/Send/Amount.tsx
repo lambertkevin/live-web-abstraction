@@ -1,10 +1,12 @@
 import classNames from 'classnames';
 import BigNumber from 'bignumber.js';
-import { getEstimatedFees } from '@ledgerhq/coin-evm/lib/logic';
+import { getEstimatedFees as getEvmEstimatedFees } from '@ledgerhq/coin-evm/lib/logic';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { getTypedTransaction } from '@ledgerhq/coin-evm/lib/transaction';
 import type { CryptoOrTokenCurrency } from '@ledgerhq/types-cryptoassets';
-import type { Transaction, TransactionStatus } from '@ledgerhq/coin-evm/lib/types/transaction';
+import type { Transaction as EvmTransaction, TransactionStatus } from '@ledgerhq/coin-evm/lib/types/transaction';
+import { getEstimatedFees as getEvmAbstractionEstimatedFees } from '../../libraries/coin-evm-abstraction/logic';
+import { EvmAbstractionTransaction } from '../../libraries/coin-evm-abstraction/types';
 import CurrencyIcon from '../../components/icons/CurrencyIcon';
 import SpeedMedium from '../../components/icons/SpeedMedium';
 import { useGasOptions } from '../../hooks/useGasOptions';
@@ -12,15 +14,17 @@ import SpeedSlow from '../../components/icons/SpeedSlow';
 import SpeedFast from '../../components/icons/SpeedFast';
 import Exchange from '../../components/icons/Exchange';
 import { useCurrencyPriceStore } from '../../store';
+import type { Signer } from '../../types';
 import { theme } from '../../config';
 
 type Props = {
-  transaction: Transaction;
+  transaction: EvmTransaction | EvmAbstractionTransaction;
   currency: CryptoOrTokenCurrency;
   status: TransactionStatus | null | undefined;
-  updateTransaction: (transaction: Partial<Transaction>) => void;
+  updateTransaction: (transaction: Partial<EvmTransaction | EvmAbstractionTransaction>) => void;
   isPending: boolean;
   goNextStep: () => void;
+  signer: Signer | undefined;
 };
 
 const SpeedComponent = {
@@ -93,20 +97,23 @@ const AmountStep = ({ currency, isPending, status, goNextStep, updateTransaction
 
   const [gasOptionsValues, gasError, gasPending] = useGasOptions({
     currency: currency.type === 'TokenCurrency' ? currency.parentCurrency : currency,
-    transaction,
+    transaction: transaction as EvmTransaction,
   });
   const gasOptions = useMemo(() => {
     if (gasPending || gasError || !gasOptionsValues) return [];
 
     return Object.entries(gasOptionsValues).map(([strategyName, option]) => {
-      const estimatedValue = getEstimatedFees(getTypedTransaction(transaction, option)).dividedBy(
-        10 ** mainCurrency.units[0].magnitude,
-      );
+      const estimatedValue =
+        transaction.family === 'evm'
+          ? getEvmEstimatedFees(getTypedTransaction(transaction, option)).dividedBy(
+              10 ** mainCurrency.units[0].magnitude,
+            )
+          : getEvmAbstractionEstimatedFees(transaction).dividedBy(10 ** mainCurrency.units[0].magnitude);
       const estimatedCost = estimatedValue.multipliedBy(prices[mainCurrencyStoreId]);
 
       return {
         Icon: SpeedComponent[strategyName as keyof typeof SpeedComponent],
-        strategyName: strategyName as Transaction['feesStrategy'],
+        strategyName: strategyName as EvmTransaction['feesStrategy'],
         estimatedValue,
         estimatedCost,
       };
@@ -119,9 +126,9 @@ const AmountStep = ({ currency, isPending, status, goNextStep, updateTransaction
     }
   }, [gasOptionsValues, transaction, updateTransaction]);
 
-  const [selectedStrategy, setSelectedStrategy] = useState<Transaction['feesStrategy']>('medium');
+  const [selectedStrategy, setSelectedStrategy] = useState<EvmTransaction['feesStrategy']>('medium');
   const onSelectStrategy = useCallback(
-    (strategyName: Transaction['feesStrategy']) => {
+    (strategyName: EvmTransaction['feesStrategy']) => {
       setSelectedStrategy(strategyName);
       updateTransaction({ feesStrategy: strategyName });
     },

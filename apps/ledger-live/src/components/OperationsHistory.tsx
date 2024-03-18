@@ -1,7 +1,8 @@
 import { DateTime } from 'luxon';
 import groupBy from 'lodash/groupBy';
 import React, { memo, useCallback, useMemo, useState } from 'react';
-import type { Account, TokenAccount, OperationType } from '@ledgerhq/types-live';
+import type { TokenAccount, OperationType } from '@ledgerhq/types-live';
+import type { AccountWithSigners } from '../types';
 import { useCurrencyPriceStore } from '../store';
 import { iconsList } from './icons';
 import classNames from 'classnames';
@@ -9,7 +10,7 @@ import { theme } from '../config';
 import ChevronUp from './icons/ChevronUp';
 
 type Props = {
-  account: Account | TokenAccount;
+  account: AccountWithSigners | TokenAccount;
 };
 
 const OperationTypeMap: Partial<Record<OperationType, string>> = {

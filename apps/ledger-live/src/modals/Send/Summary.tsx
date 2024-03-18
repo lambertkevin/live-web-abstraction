@@ -1,14 +1,16 @@
 import { memo, useMemo } from 'react';
-import type { Account, TokenAccount } from '@ledgerhq/types-live';
+import type { TokenAccount } from '@ledgerhq/types-live';
 import type { CryptoOrTokenCurrency } from '@ledgerhq/types-cryptoassets';
-import type { Transaction, TransactionStatus } from '@ledgerhq/coin-evm/lib/types/transaction';
+import type { Transaction as EvmTransaction, TransactionStatus } from '@ledgerhq/coin-evm/lib/types/transaction';
+import { EvmAbstractionTransaction } from '../../libraries/coin-evm-abstraction/types';
 import CurrencyIcon from '../../components/icons/CurrencyIcon';
 import { useCurrencyPriceStore } from '../../store';
+import { AccountWithSigners } from '../../types';
 import BigNumber from 'bignumber.js';
 
 type Props = {
-  transaction: Transaction;
-  account: Account | TokenAccount;
+  transaction: EvmTransaction | EvmAbstractionTransaction;
+  account: AccountWithSigners | TokenAccount;
   currency: CryptoOrTokenCurrency;
   status: TransactionStatus | null | undefined;
   goNextStep: () => void;
@@ -68,10 +70,12 @@ const SummaryStep = ({ transaction, account, status, goNextStep, currency }: Pro
             </span>
             <span>
               $
-              {transaction.amount
-                .dividedBy(10 ** currency.units[0].magnitude)
-                .times(prices[currencyStoreId])
-                .toPrecision(2)}
+              {parseFloat(
+                transaction.amount
+                  .dividedBy(10 ** currency.units[0].magnitude)
+                  .times(prices[currencyStoreId])
+                  .toPrecision(2),
+              )}
             </span>
           </div>
         </div>
@@ -93,7 +97,7 @@ const SummaryStep = ({ transaction, account, status, goNextStep, currency }: Pro
                 <span>
                   {totalAmount.toFixed()} {currency.units[0].code}
                 </span>
-                <span>${totalAmount.times(prices[mainCurrencyStoreId]).toPrecision(2)}</span>
+                <span>${parseFloat(totalAmount.times(prices[mainCurrencyStoreId]).toPrecision(2))}</span>
               </div>
             </div>
           </>

@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { memo, useCallback, useMemo, useState } from 'react';
-import type { Account, TokenAccount } from '@ledgerhq/types-live';
+import type { TokenAccount } from '@ledgerhq/types-live';
+import type { AccountWithSigners } from '../types';
 import { useCurrencyPriceStore } from '../store';
 import CurrencyIcon from './icons/CurrencyIcon';
 import ChevronUp from './icons/ChevronUp';
@@ -8,7 +9,7 @@ import { theme } from '../config';
 import Star from './icons/Star';
 
 type Props = {
-  account: Account;
+  account: AccountWithSigners;
 };
 
 const TokenAccountsPreview = ({ account }: Props) => {

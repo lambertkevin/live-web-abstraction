@@ -1,5 +1,6 @@
 import { getGasTracker } from '@ledgerhq/coin-evm/lib/api/gasTracker/index';
-import type { GasOptions, Transaction } from '@ledgerhq/coin-evm/types/index';
+import type { GasOptions, Transaction as EvmTransaction } from '@ledgerhq/coin-evm/types/index';
+import { EvmAbstractionTransaction } from '../libraries/coin-evm-abstraction/types';
 import type { CryptoCurrency } from '@ledgerhq/types-cryptoassets';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -15,10 +16,10 @@ export const useGasOptions = ({
   interval = 60 * 1000,
 }: {
   currency: CryptoCurrency;
-  transaction: Transaction;
+  transaction: EvmTransaction | EvmAbstractionTransaction;
   interval?: number;
 }): [GasOptions | undefined, Error | null, boolean] => {
-  const shouldUseEip1559 = transaction.type === 2;
+  const shouldUseEip1559 = transaction.family === 'evm-abstraction' || transaction.type === 2;
   const gasTracker = useMemo(() => getGasTracker(currency), [currency]);
   const [error, setError] = useState<Error | null>(null);
   const [gasOptions, setGasOptions] = useState<GasOptions | undefined>(undefined);

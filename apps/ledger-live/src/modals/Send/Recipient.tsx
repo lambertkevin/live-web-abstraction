@@ -1,20 +1,22 @@
+import type { TokenAccount } from '@ledgerhq/types-live';
 import React, { memo, useCallback, useEffect, useState } from 'react';
-import type { Account, TokenAccount } from '@ledgerhq/types-live';
-import type { Transaction, TransactionStatus } from '@ledgerhq/coin-evm/lib/types/transaction';
+import type { Transaction as EvmTransaction, TransactionStatus } from '@ledgerhq/coin-evm/lib/types/transaction';
 import CurrencyIcon from '../../components/icons/CurrencyIcon';
 import ArrowDown from '../../components/icons/ArrowDown';
+import type { AccountWithSigners } from '../../types';
 import Select from '../../components/Select';
 import { theme } from '../../config';
 import classNames from 'classnames';
+import { EvmAbstractionTransaction } from '../../libraries/coin-evm-abstraction/types';
 
 type Props = {
-  accounts: Account[];
-  selectedAccount: Account | TokenAccount;
-  mainAccount: Account;
-  setSelectedAccount: (value: React.SetStateAction<Account | TokenAccount>) => void;
-  transaction: Transaction;
+  accounts: AccountWithSigners[];
+  selectedAccount: AccountWithSigners | TokenAccount;
+  mainAccount: AccountWithSigners;
+  setSelectedAccount: (value: React.SetStateAction<AccountWithSigners | TokenAccount>) => void;
+  transaction: EvmTransaction | EvmAbstractionTransaction;
   status: TransactionStatus | null | undefined;
-  updateTransaction: (transaction: Partial<Transaction>) => void;
+  updateTransaction: (transaction: Partial<EvmTransaction | EvmAbstractionTransaction>) => void;
   isPending: boolean;
   goNextStep: () => void;
 };

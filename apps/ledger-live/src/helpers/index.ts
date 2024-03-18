@@ -1,7 +1,9 @@
 import TransportWebUSB from '@ledgerhq/hw-transport-webusb';
 import TransportWebBLE from '@ledgerhq/hw-transport-web-ble';
 import Transport from '@ledgerhq/hw-transport';
-import { Signer } from './types';
+import { Signer } from '../types';
+
+export * from './4337';
 
 export const openNanoApp = async (
   appName: string,
@@ -17,7 +19,6 @@ export const openNanoApp = async (
           console.log('ble', { eee });
           throw eee;
         }));
-
     console.log('Create new transport', { type, transport });
 
     // getAppAndVersion
@@ -55,20 +56,88 @@ export const openNanoApp = async (
   }
 };
 
-export const SignerOptions: Signer[] = [
+export type SignerOption = { type: Signer['type']; mode: Signer['mode']; name: string };
+
+export const SignerOptions: SignerOption[] = [
   {
     type: 'ledger-usb',
+    mode: 'EOA',
     name: 'USB',
-    enabled: true,
   },
   {
     type: 'ledger-ble',
+    mode: 'EOA',
     name: 'Bluetooth',
-    enabled: true,
   },
   {
     type: 'webauthn',
+    mode: 'Webauthn',
     name: 'Webauthn',
-    enabled: false,
   },
 ];
+
+// Cannot exceed 2 entries (1 bit)
+export enum SignatureDryRun {
+  OFF,
+  ON,
+}
+
+// Cannot exceed 16 entries (4 bits)
+export enum SignatureMessageType {
+  WEBAUTHN,
+  EIP191,
+  EIP712,
+}
+
+// Cannot exceed 8 entries (3 bits)
+export enum SignatureCurveType {
+  P256_R1_VERIFY,
+  P256_K1_ECRECOVER,
+}
+
+/**
+ * Signature format (1 byte / 8 bits):
+ * 1 high order bit for dry run
+ * 4 bits for message type
+ * 3 bits for curve type
+ *
+ * 0x80 => 1 0000 000 -> DRY RUN ON  | WEBAUTHN | P256_R1_VERIFY
+ * 0x09 => 0 0001 001 -> DRY RUN OFF | EIP191   | P256_K1_ECRECOVER
+ * 0x11 => 0 0010 001 -> DRY RUN OFF | EIP712   | P256_K1_ECRECOVER
+ */
+export const getSignatureType = (
+  dryRun: SignatureDryRun,
+  messageType: SignatureMessageType,
+  curveType: SignatureCurveType,
+) => {
+  let signatureType = 0;
+
+  signatureType += dryRun; // 1 bit
+
+  // 4 bits
+  signatureType = signatureType << 4;
+  signatureType += messageType;
+
+  // 3 bits
+  signatureType = signatureType << 3;
+  signatureType += curveType;
+
+  return signatureType;
+};
+
+/**
+ * Reverse function of the getSignatureType method
+ */
+export const decodeSignatureType = (
+  signatureType: number,
+): {
+  dryRun: SignatureDryRun;
+  messageType: SignatureMessageType;
+  curveType: SignatureCurveType;
+} => {
+  return {
+    dryRun: signatureType >> 7,
+    messageType: (signatureType >> 3) & 0x0f, // 0x0f <=> 0111 mask
+    curveType: signatureType & 0x07, // 0x07 <=> 00000111 mask
+  };
+};

@@ -1,6 +1,7 @@
 import { memo, useCallback, useMemo, useState } from 'react';
-import type { Account, TokenAccount } from '@ledgerhq/types-live';
+import type { TokenAccount } from '@ledgerhq/types-live';
 import { useAccountsStore, useCurrencyPriceStore } from '../store';
+import type { AccountWithSigners } from '../types';
 import CurrencyIcon from './icons/CurrencyIcon';
 import ChevronUp from './icons/ChevronUp';
 import Check from './icons/Check';
@@ -8,13 +9,13 @@ import Star from './icons/Star';
 import { theme } from '../config';
 
 type Props = {
-  account: Account;
+  account: AccountWithSigners;
   onClick?: (accountId: string) => void;
 };
 
 const AccountPreview = ({ account, onClick }: Props) => {
   const { updateAccount } = useAccountsStore();
-  const onStarAccount = useCallback((account: Account) => {
+  const onStarAccount = useCallback((account: AccountWithSigners) => {
     updateAccount({ ...account, starred: !account.starred });
   }, []);
 

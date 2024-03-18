@@ -1,12 +1,11 @@
 import uniqBy from 'lodash/uniqBy';
 import Eth from '@ledgerhq/hw-app-eth';
 import { memo, useCallback, useEffect, useState } from 'react';
-import type { Account } from '@ledgerhq/types-live';
 import type { CryptoCurrency } from '@ledgerhq/types-cryptoassets';
 import { buildCurrencyBridge } from '@ledgerhq/coin-evm/lib/bridge/js';
 import CurrencyIcon from '../../components/icons/CurrencyIcon';
+import type { AccountWithSigners, Signer } from '../../types';
 import { useAccountsStore, useModalStore } from '../../store';
-import { Signer } from '../../types';
 
 type Props = {
   currency: CryptoCurrency;
@@ -14,7 +13,7 @@ type Props = {
 };
 
 const AccountStep = ({ signer, currency }: Props) => {
-  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [accounts, setAccounts] = useState<AccountWithSigners[]>([]);
   const { addAccount } = useAccountsStore();
   const { closeModal } = useModalStore();
 
@@ -26,7 +25,7 @@ const AccountStep = ({ signer, currency }: Props) => {
   }, []);
 
   useEffect(() => {
-    if (!signer || signer.type === 'webauthn' || !signer.transport) return;
+    if (!signer || signer.type === 'webauthn' || !signer.transport || accounts.length) return;
 
     const bridge = buildCurrencyBridge(async (deviceId: string, fn) => {
       console.log('building bridge');
@@ -34,7 +33,7 @@ const AccountStep = ({ signer, currency }: Props) => {
       return fn(app);
     });
 
-    const a = bridge
+    const obs = bridge
       .scanAccounts({ currency, deviceId: '', syncConfig: { paginationConfig: { operations: 10 } } })
       .subscribe({
         next(res) {
@@ -48,11 +47,10 @@ const AccountStep = ({ signer, currency }: Props) => {
         },
         complete() {
           console.log('finished!');
-          a.unsubscribe();
         },
       });
 
-    return () => a.unsubscribe();
+    return () => obs.unsubscribe();
   }, [accounts, currency, signer]);
 
   const onContinue = useCallback(() => {

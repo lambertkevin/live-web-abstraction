@@ -1,12 +1,13 @@
 import classNames from 'classnames';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import type { Account, TokenAccount } from '@ledgerhq/types-live';
+import type { TokenAccount } from '@ledgerhq/types-live';
 import { useBridge } from '../../hooks/useBridge';
 import { useAccountsStore } from '../../store';
-import type { Signer } from '../../types';
+import type { AccountWithSigners, Signer } from '../../types';
 import SignatureStep from './Signature';
 import RecipientStep from './Recipient';
 import SummaryStep from './Summary';
+import SignerStep from './Signer';
 import AmountStep from './Amount';
 import './index.css';
 
@@ -14,11 +15,11 @@ type Props = {
   accountId: string;
 };
 
-const STEPS = ['Recipients', 'Amount', 'Summary', 'Signature'];
+const STEPS = ['Recipient', 'Signer', 'Amount', 'Summary', 'Signature'];
 
 const SendModal = ({ accountId }: Props) => {
   const { accounts, setSyncInterval, syncInterval } = useAccountsStore();
-  const [selectedAccount, setSelectedAccount] = useState<Account | TokenAccount>(
+  const [selectedAccount, setSelectedAccount] = useState<AccountWithSigners | TokenAccount>(
     accounts
       .flatMap((account) => [
         account,
@@ -36,6 +37,7 @@ const SendModal = ({ accountId }: Props) => {
   );
 
   const [signer, setSigner] = useState<Signer>();
+  console.log({ signer });
   const { transaction, status, updateTransaction, isPending, bridge, transport, transportError } = useBridge(
     mainAccount!,
     undefined,
@@ -93,8 +95,12 @@ const SendModal = ({ accountId }: Props) => {
         />
       )}
       {step === 1 && (
+        <SignerStep account={mainAccount!} setSigner={setSigner} signer={signer} goNextStep={goNextStep} />
+      )}
+      {step === 2 && (
         <AmountStep
           status={status}
+          signer={signer}
           transaction={transaction}
           updateTransaction={updateTransaction}
           isPending={isPending}
@@ -102,7 +108,7 @@ const SendModal = ({ accountId }: Props) => {
           goNextStep={goNextStep}
         />
       )}
-      {step === 2 && (
+      {step === 3 && (
         <SummaryStep
           transaction={transaction}
           account={selectedAccount}
@@ -111,7 +117,7 @@ const SendModal = ({ accountId }: Props) => {
           goNextStep={goNextStep}
         />
       )}
-      {step === 3 && (
+      {step === 4 && (
         <SignatureStep
           transaction={transaction}
           account={mainAccount!}

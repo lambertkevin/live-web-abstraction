@@ -1,19 +1,18 @@
 import axios from 'axios';
 import { create } from 'zustand';
-import type { Account, TokenAccount } from '@ledgerhq/types-live';
+import type { TokenAccount } from '@ledgerhq/types-live';
 import { devtools, subscribeWithSelector } from 'zustand/middleware';
 import { buildAccountBridge, buildCurrencyBridge } from '@ledgerhq/coin-evm/lib/bridge/js';
-import { getCryptoCurrencyById } from '@ledgerhq/cryptoassets/lib/currencies';
-import { makeAccount } from '@ledgerhq/coin-evm/lib/__tests__/fixtures/common.fixtures';
+import { AccountWithSigners } from './types';
 
 type AccountsStore = {
-  accounts: Account[];
+  accounts: AccountWithSigners[];
   isSyncing: boolean;
   syncInterval: number;
   setSyncInterval: (syncInterval: number) => void;
   syncAccounts: () => Promise<void>;
-  addAccount: (account: Account) => void;
-  updateAccount: (account: Account) => void;
+  addAccount: (account: AccountWithSigners) => void;
+  updateAccount: (account: AccountWithSigners) => void;
 };
 
 export const useAccountsStore = create<AccountsStore>()(
@@ -52,12 +51,12 @@ export const useAccountsStore = create<AccountsStore>()(
           isSyncing: false,
         }));
       },
-      addAccount(account: Account) {
+      addAccount(account: AccountWithSigners) {
         set((state) => ({
           accounts: [...state.accounts, account],
         }));
       },
-      updateAccount(account: Account) {
+      updateAccount(account: AccountWithSigners) {
         set((state) => ({
           accounts: [
             ...state.accounts.toSpliced(

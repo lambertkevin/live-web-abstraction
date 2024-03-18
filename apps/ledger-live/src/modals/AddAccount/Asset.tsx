@@ -14,7 +14,7 @@ const AssetStep = ({ selectedCurrency, setSelectedCurrency, goNextStep }: Props)
   const allCurrencies = useMemo(
     () =>
       listCryptoCurrencies(true).filter(
-        (currency) => currency.family === 'evm' && currency.managerAppName === 'Ethereum',
+        (currency) => currency.family === 'evm' && Object.keys(currency?.ethereumLikeInfo || {}).length,
       ),
     [],
   );
