@@ -4,6 +4,7 @@ import { createBrowserRouter, Outlet, RouterProvider } from 'react-router-dom';
 import ModalContainer from './modals/ModalContainer';
 import Sidebar from './components/Sidebar';
 import TopBar from './components/TopBar';
+import Discover from './views/Discover';
 import Accounts from './views/Accounts';
 import Account from './views/Account';
 import Connect from './views/Connect';
@@ -48,6 +49,10 @@ const router = createBrowserRouter([
       {
         path: '/accounts/:accountId',
         element: <Account />,
+      },
+      {
+        path: '/discover',
+        element: <Discover />,
       },
       {
         path: '*',
