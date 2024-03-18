@@ -22,6 +22,7 @@ contract LedgerAccount is
   address immutable factoryAddr;
   string username;
   string domain;
+  uint256 private _signersCount;
 
   modifier onlyOwner() {
     _onlyOwner();
@@ -39,6 +40,7 @@ contract LedgerAccount is
     string username,
     string domain
   );
+  event LedgerAccountSignerAdded();
 
   constructor(
     IEntryPoint anEntryPoint,
@@ -176,5 +178,30 @@ contract LedgerAccount is
   function _authorizeUpgrade(address newImplementation) internal view override {
     (newImplementation);
     _onlyOwner();
+  }
+
+  function _incrementSignersCount() private {
+    _signersCount = _signersCount + 1;
+  }
+
+  function _decrementSignersCount() private {
+    _signersCount = _signersCount - 1;
+  }
+
+  function addFirstSigner(bytes memory newSignerPayload) public onlyFactory {
+    require(_signersCount == 0, "First signer already set");
+    LedgerAccountSignatureLib.addNewSigner(
+      newSignerPayload,
+      _incrementSignersCount
+    );
+    emit LedgerAccountSignerAdded();
+  }
+
+  function addSigner(bytes memory newSignerPayload) public onlyOwner {
+    LedgerAccountSignatureLib.addNewSigner(
+      newSignerPayload,
+      _incrementSignersCount
+    );
+    emit LedgerAccountSignerAdded();
   }
 }

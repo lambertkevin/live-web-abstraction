@@ -34,7 +34,8 @@ contract LedgerAccountFactory {
   function createAccount(
     string calldata username,
     string calldata domain,
-    uint256 salt
+    uint256 salt,
+    bytes calldata signerPayload
   ) public returns (LedgerAccount) {
     address addr = getAddress(username, domain, salt);
     uint256 codeSize = addr.code.length;
@@ -49,6 +50,8 @@ contract LedgerAccountFactory {
         )
       )
     );
+
+    acc.addFirstSigner(signerPayload);
 
     return acc;
   }
