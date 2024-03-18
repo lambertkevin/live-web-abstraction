@@ -72,14 +72,19 @@ export class BundleManager {
    * collect UserOps from mempool into a bundle
    * send this bundle.
    */
-  async sendNextBundle (): Promise<SendBundleReturn | undefined> {
-    return await this.mutex.runExclusive(async () => {
+  async sendNextBundle(): Promise<SendBundleReturn | undefined> {
+    console.log("sendNextBundle triggered");
+    return (async () => {
+      console.log("sendNextBundle in mutex triggered");
+
       debug('sendNextBundle')
 
       // first flush mempool from already-included UserOps, by actively scanning past events.
       await this.handlePastEvents()
+      console.log("handlePastEvents success");
 
       const [bundle, storageMap] = await this.createBundle()
+      console.log("BUNDLE", { bundle });
       if (bundle.length === 0) {
         debug('sendNextBundle - no bundle to send')
       } else {
@@ -88,7 +93,7 @@ export class BundleManager {
         debug(`sendNextBundle exit - after sent a bundle of ${bundle.length} `)
         return ret
       }
-    })
+    })();
   }
 
   async handlePastEvents (): Promise<void> {
