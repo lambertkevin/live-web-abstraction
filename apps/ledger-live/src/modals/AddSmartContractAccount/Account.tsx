@@ -1,5 +1,5 @@
 import uniqBy from 'lodash/uniqBy';
-// import Eth from '@ledgerhq/hw-app-eth';
+import isEqual from 'lodash/isEqual';
 import { memo, useCallback, useEffect, useState } from 'react';
 import type { CryptoCurrency } from '@ledgerhq/types-cryptoassets';
 import { buildCurrencyBridge } from '../../libraries/coin-evm-abstraction/bridge';
@@ -32,7 +32,10 @@ const AccountStep = ({ signer, currency }: Props) => {
       next(res) {
         console.log(res);
         if (res.type === 'discovered') {
-          setAccounts(uniqBy([...accounts, res.account], ({ id }) => id));
+          const newAccounts = uniqBy([...accounts, res.account], ({ id }) => id);
+          if (!isEqual(newAccounts, accounts)) {
+            setAccounts(newAccounts);
+          }
         }
       },
       error(err) {

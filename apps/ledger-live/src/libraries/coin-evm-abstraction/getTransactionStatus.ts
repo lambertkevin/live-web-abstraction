@@ -1,8 +1,16 @@
+import {
+  ETHAddressNonEIP,
+  InvalidAddress,
+  RecipientRequired,
+  FeeNotLoaded,
+  FeeRequired,
+  AmountRequired,
+  NotEnoughBalance,
+} from '@ledgerhq/errors';
 import { ethers } from 'ethers';
-import { ETHAddressNonEIP, InvalidAddress, RecipientRequired } from '@ledgerhq/errors';
+import type { AccountBridge } from '@ledgerhq/types-live';
 import type { EvmAbstractionTransaction } from './types';
 import type { AccountWithSigners } from '../../types';
-import type { AccountBridge } from '@ledgerhq/types-live';
 import { getEstimatedFees } from './logic';
 
 type ValidatedTransactionFields =
@@ -53,6 +61,39 @@ export const validateRecipient = (
   return [errors, warnings];
 };
 
+export const validateGas = (tx: EvmAbstractionTransaction): Array<ValidationIssues> => {
+  const errors: ValidationIssues = {};
+  const warnings: ValidationIssues = {};
+
+  if (tx.callGasLimit.isZero() || tx.verificationGasLimit.isZero() || tx.preVerificationGas.isZero()) {
+    errors.gasLimit = new FeeNotLoaded();
+  }
+
+  if (tx.maxFeePerGas.isZero() || tx.maxPriorityFeePerGas.isZero()) {
+    errors.gasPrice = new FeeRequired();
+  }
+
+  return [errors, warnings];
+};
+
+export const validateAmout = (account: AccountWithSigners, tx: EvmAbstractionTransaction): Array<ValidationIssues> => {
+  const errors: ValidationIssues = {};
+  const warnings: ValidationIssues = {};
+
+  const estimatedFees = getEstimatedFees(tx);
+  if (tx.amount.isNegative()) {
+    errors.amount = new AmountRequired();
+  } else if (tx.amount.isZero() && !tx.callData?.length) {
+    errors.amount = new AmountRequired();
+  } else if (tx.amount.isGreaterThan(account.balance) && tx.paymaster && tx.paymasterData) {
+    errors.amount = new NotEnoughBalance();
+  } else if (tx.amount.plus(estimatedFees).isGreaterThan(account.balance) && !tx.paymaster && !tx.paymasterData) {
+    errors.amount = new NotEnoughBalance();
+  }
+
+  return [errors, warnings];
+};
+
 export const getTransactionStatus: AccountBridge<EvmAbstractionTransaction>['getTransactionStatus'] = async (
   account,
   transaction,
@@ -60,12 +101,18 @@ export const getTransactionStatus: AccountBridge<EvmAbstractionTransaction>['get
   const estimatedFees = getEstimatedFees(transaction);
 
   const [recipientErrors, recipientWarnings] = validateRecipient(account, transaction);
+  const [gasErrors, gasWarnings] = validateGas(transaction);
+  const [amountErrors, amountWarnings] = validateAmout(account, transaction);
 
   const errors = {
     ...recipientErrors,
+    ...gasErrors,
+    ...amountErrors,
   };
   const warnings = {
     ...recipientWarnings,
+    ...gasWarnings,
+    ...amountWarnings,
   };
 
   return {

@@ -75,3 +75,18 @@ services:
     ports:
       - "${FRONTEND_PORT}:${FRONTEND_PORT}"
     command: ./run.sh
+
+  dapp:
+    image: "node:20-buster-slim"
+    user: "root"
+    volumes:
+      - ./dapp:/app
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - VITE_NETWORK=${RPC}
+    working_dir: /app
+    ports:
+      - "${DAPP_PORT}:${DAPP_PORT}"
+    command: ./run.sh

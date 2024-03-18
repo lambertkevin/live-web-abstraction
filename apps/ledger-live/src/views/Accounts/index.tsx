@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import AccountPreview from '../../components/AccountPreview';
 import { useAccountsStore, useModalStore } from '../../store';
 import Plus from '../../components/icons/Plus';
+import CoolButton from '../../components/CoolButton';
 
 const Accounts = () => {
   const { openModal } = useModalStore();
@@ -24,9 +25,9 @@ const Accounts = () => {
             <button className="btn btn-primary text-sm min-h-0 h-auto" onClick={() => openModal('AddAccount', {})}>
               <Plus /> Add account
             </button>
-            <button className="btn btn-accent text-sm min-h-0 h-auto" onClick={() => openModal('AddSmartAccount', {})}>
-              <Plus /> Add Smart Account
-            </button>
+            <CoolButton className="flex text-sm flex-row gap-3" onClick={() => openModal('AddSmartAccount', {})}>
+              <Plus /> <span className="text-nowrap">Add Smart Account</span>
+            </CoolButton>
           </div>
         ) : null}
       </div>
@@ -42,9 +43,9 @@ const Accounts = () => {
             <button className="btn btn-primary text-lg p-4" onClick={() => openModal('AddAccount', {})}>
               <Plus /> Add account
             </button>
-            <button className="btn btn-accent text-lg p-4" onClick={() => openModal('AddSmartAccount', {})}>
-              <Plus /> Add Smart Account
-            </button>
+            <CoolButton className="text-lg p-4 flex flex-row gap-3" onClick={() => openModal('AddSmartAccount', {})}>
+              <Plus /> <span className="text-nowrap">Add Smart Account</span>
+            </CoolButton>
           </div>
         </div>
       )}

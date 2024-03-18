@@ -12,10 +12,44 @@ type Props = {
 
 const AssetStep = ({ selectedCurrency, setSelectedCurrency, goNextStep }: Props) => {
   const allCurrencies = useMemo(
-    () =>
-      listCryptoCurrencies(true).filter(
+    () => [
+      {
+        type: 'CryptoCurrency',
+        id: 'anvil' as any,
+        name: 'Anvil',
+        // the ticker name in exchanges / countervalue apis (e.g. BTC).
+        ticker: 'ETH',
+        // all units of a currency (e.g. Bitcoin have bitcoin, mBTC, bit, satoshi)
+        // by convention, [0] is the default and have "highest" magnitude
+        units: [
+          {
+            name: 'ETH',
+            code: 'ETH',
+            magnitude: 18,
+          },
+        ],
+        managerAppName: 'Ethereum',
+        coinType: 60,
+        scheme: 'anvil',
+        color: '#00FF00',
+        family: 'evm-abstraction',
+        ethereumLikeInfo: {
+          chainId: 31337,
+          node: {
+            type: 'external',
+            uri: 'http://localhost:8545',
+          },
+          explorer: {
+            type: 'etherscan',
+            uri: 'http://localhost:43371',
+          },
+        },
+        explorerViews: [{}],
+      },
+      ...listCryptoCurrencies(true).filter(
         (currency) => currency.family === 'evm' && Object.keys(currency?.ethereumLikeInfo || {}).length,
       ),
+    ],
     [],
   );
 

@@ -6,6 +6,7 @@ import Sidebar from './components/Sidebar';
 import TopBar from './components/TopBar';
 import Accounts from './views/Accounts';
 import Account from './views/Account';
+import Connect from './views/Connect';
 import './index.css';
 
 const AppLayout = memo(() => {
@@ -26,6 +27,16 @@ const AppLayout = memo(() => {
 });
 AppLayout.displayName = 'AppLayout';
 
+const ConnectLayout = memo(() => {
+  return (
+    <main className="flex flex-row min-h-[100vh] flex-grow">
+      <Outlet />
+      <ModalContainer />
+    </main>
+  );
+});
+ConnectLayout.displayName = 'ConnectLayout';
+
 const router = createBrowserRouter([
   {
     element: <AppLayout />,
@@ -41,6 +52,15 @@ const router = createBrowserRouter([
       {
         path: '*',
         element: <h1>404</h1>,
+      },
+    ],
+  },
+  {
+    element: <ConnectLayout />,
+    children: [
+      {
+        path: '/Connect',
+        element: <Connect />,
       },
     ],
   },

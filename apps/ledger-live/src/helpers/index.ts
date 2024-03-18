@@ -1,6 +1,8 @@
+import classNames from 'classnames';
+import { twMerge } from 'tailwind-merge';
+import Transport from '@ledgerhq/hw-transport';
 import TransportWebUSB from '@ledgerhq/hw-transport-webusb';
 import TransportWebBLE from '@ledgerhq/hw-transport-web-ble';
-import Transport from '@ledgerhq/hw-transport';
 import { Signer } from '../types';
 
 export * from './4337';
@@ -72,7 +74,7 @@ export const SignerOptions: SignerOption[] = [
   {
     type: 'webauthn',
     mode: 'Webauthn',
-    name: 'Webauthn',
+    name: 'Passkey',
   },
 ];
 
@@ -141,3 +143,7 @@ export const decodeSignatureType = (
     curveType: signatureType & 0x07, // 0x07 <=> 00000111 mask
   };
 };
+
+export function cn(...inputs: string[]) {
+  return twMerge(classNames(inputs));
+}

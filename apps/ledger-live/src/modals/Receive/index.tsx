@@ -82,7 +82,7 @@ const Receive = ({ accountId }: Props) => {
     }
   }, [isCopied]);
 
-  if (!mainAccount) return;
+  if (!mainAccount) return <></>;
 
   return (
     <>

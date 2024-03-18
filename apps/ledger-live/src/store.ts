@@ -1,9 +1,10 @@
 import axios from 'axios';
 import { create } from 'zustand';
 import type { TokenAccount } from '@ledgerhq/types-live';
-import { devtools, subscribeWithSelector } from 'zustand/middleware';
+import { devtools, subscribeWithSelector, persist } from 'zustand/middleware';
 import { buildAccountBridge, buildCurrencyBridge } from '@ledgerhq/coin-evm/lib/bridge/js';
 import { AccountWithSigners } from './types';
+import { fromAccountRaw, toAccountRaw } from './helpers/ledger';
 
 type AccountsStore = {
   accounts: AccountWithSigners[];
@@ -17,58 +18,96 @@ type AccountsStore = {
 
 export const useAccountsStore = create<AccountsStore>()(
   devtools(
-    subscribeWithSelector((set, get) => ({
-      accounts: [],
-      isSyncing: false,
-      syncInterval: 2 * 60 * 1000,
-      setSyncInterval(syncInterval) {
-        set(() => ({ syncInterval }));
-      },
-      async syncAccounts() {
-        const currencyBridge = buildCurrencyBridge(() => ({}) as any);
-        const accountBridge = buildAccountBridge(() => ({}) as any);
+    persist(
+      subscribeWithSelector((set, get) => ({
+        accounts: [],
+        isSyncing: false,
+        syncInterval: 2 * 60 * 1000,
+        setSyncInterval(syncInterval) {
+          set(() => ({ syncInterval }));
+        },
+        async syncAccounts() {
+          const currencyBridge = buildCurrencyBridge(() => ({}) as any);
+          const accountBridge = buildAccountBridge(() => ({}) as any);
 
-        set(() => ({ isSyncing: true }));
-        const accounts = await Promise.all(
-          get().accounts.map(async (account) => {
-            await currencyBridge.preload(account.currency);
-            return accountBridge
-              .sync(account, { paginationConfig: {} })
-              .toPromise()
-              .then((updater) => {
-                if (!updater || !account) throw new Error('No updater or account');
-                return updater(account);
-              })
-              .catch((e) => {
-                console.error('SYNC ERROR', e);
-                throw e;
-              });
-          }),
-        );
+          set(() => ({ isSyncing: true }));
+          const accounts = await Promise.all(
+            get().accounts.map(async (account) => {
+              await currencyBridge.preload(account.currency);
+              return accountBridge
+                .sync(account, { paginationConfig: {} })
+                .toPromise()
+                .then((updater) => {
+                  if (!updater || !account) throw new Error('No updater or account');
+                  return updater(account);
+                })
+                .catch((e) => {
+                  console.error('SYNC ERROR', e);
+                  throw e;
+                });
+            }),
+          );
 
-        set(() => ({
-          accounts,
-          isSyncing: false,
-        }));
+          set(() => ({
+            accounts,
+            isSyncing: false,
+          }));
+        },
+        addAccount(account: AccountWithSigners) {
+          set((state) => ({
+            accounts: [...state.accounts, account],
+          }));
+        },
+        updateAccount(account: AccountWithSigners) {
+          set((state) => ({
+            accounts: [
+              ...state.accounts.toSpliced(
+                state.accounts.findIndex((a) => a.id === account.id),
+                1,
+                account,
+              ),
+            ],
+          }));
+        },
+      })),
+      {
+        name: 'AccountsStore',
+        storage: {
+          getItem: (name) => {
+            const parse = (str: string | null) => {
+              if (str === null) {
+                return null;
+              }
+              const parsedJson = JSON.parse(str);
+              const state = {
+                ...parsedJson.state,
+                accounts: parsedJson.state.accounts.map(fromAccountRaw),
+              };
+
+              return {
+                ...parsedJson,
+                state,
+              };
+            };
+
+            return parse(localStorage.getItem(name) ?? null);
+          },
+          setItem: (name, newValue) => {
+            localStorage.setItem(
+              name,
+              JSON.stringify({
+                ...newValue,
+                state: {
+                  ...newValue.state,
+                  accounts: newValue.state.accounts.map(toAccountRaw),
+                },
+              }),
+            );
+          },
+          removeItem: (name) => localStorage.removeItem(name),
+        },
       },
-      addAccount(account: AccountWithSigners) {
-        set((state) => ({
-          accounts: [...state.accounts, account],
-        }));
-      },
-      updateAccount(account: AccountWithSigners) {
-        set((state) => ({
-          accounts: [
-            ...state.accounts.toSpliced(
-              state.accounts.findIndex((a) => a.id === account.id),
-              1,
-              account,
-            ),
-          ],
-        }));
-      },
-    })),
-    { name: 'AccountsStore' },
+    ),
   ),
 );
 

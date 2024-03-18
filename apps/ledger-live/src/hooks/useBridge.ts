@@ -46,9 +46,10 @@ export const useBridge = (
 
     [account.seedIdentifier, signer, transport],
   );
+
   const [isPending, setIsPending] = useState(false);
   const [transaction, setTransaction] = useState<EvmTransaction | EvmAbstractionTransaction>(
-    _transaction || bridge.createTransaction(account),
+    bridge.createTransaction(account),
   );
   const [status, setStatus] = useState<TransactionStatus | null>();
 
@@ -67,7 +68,9 @@ export const useBridge = (
         } as EvmTransaction | EvmAbstractionTransaction;
         const preparedTransaction = await bridge.prepareTransaction(account, patchedTransaction);
         const updatedTransaction = bridge.updateTransaction(transaction, preparedTransaction);
-        setTransaction(updatedTransaction);
+        if (updatedTransaction !== transaction) {
+          setTransaction(updatedTransaction);
+        }
         const newStatus = await bridge.getTransactionStatus(account, updatedTransaction);
         setStatus(newStatus);
       } catch (e) {
@@ -83,6 +86,12 @@ export const useBridge = (
   useEffect(() => {
     return () => updateTransaction.cancel();
   }, []);
+
+  useEffect(() => {
+    if (_transaction) {
+      updateMethod(_transaction);
+    }
+  }, [_transaction]);
 
   return {
     bridge,

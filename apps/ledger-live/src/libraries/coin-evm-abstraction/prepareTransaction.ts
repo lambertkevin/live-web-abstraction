@@ -140,12 +140,12 @@ export const prepareTransaction: AccountBridge<EvmAbstractionTransaction>['prepa
                     transaction.useAllAmount ? tokenAccount.balance.toString() : transaction.amount.toString(),
                   ]),
                 ]
-              : [transaction.recipient, transaction.amount.toString(), '0x'],
+              : [transaction.recipient, transaction.amount.toString(), transaction.callData || '0x'],
           )
           .slice(2),
         'hex',
       )
-    : Buffer.alloc(0);
+    : transaction.callData;
 
   const draftTransaction: EvmAbstractionTransaction = {
     ...transaction,

@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+@keyframes move-bg {
+  to {
+    background-position: var(--bg-size) 0;
+  }
+}
+
+@keyframes move-bg-diag {
+  to {
+    background-position: var(--bg-size) var(--bg-size);
+  }
+}
+
+html {
+  &:before {
+    --bg-size: 300%;
+    content: '';
+    height: 100vh;
+    width: 100vw;
+    position: fixed;
+    background: url(https://i.imgur.com/DoKXjbr.png) 0% 0% repeat;
+    background-size: 5%;
+    z-index:-1;
+    opacity: 0.7;
+    animation: move-bg-diag 60s infinite linear;
+  }
+}
+
+h1 {
+  text-shadow: 2px 2px #white, -2px -2px white;
+}

@@ -8,11 +8,12 @@ import { PackedUserOperation } from "@account-abstraction/interfaces/PackedUserO
 
 import { BroadcasterScript } from "./Broadcaster.s.sol";
 import { Paymaster } from "../src/Paymaster/Paymaster.sol";
+import { QuiVeutEtreMonNFT } from "../src/NFT/NFT.sol";
 import { LedgerAccountFactory } from "../src/Accounts/LedgerAccountFactory.sol";
 import { WebauthnVerifier256r1 } from "../src/Webauthn/WebauthnVerifier256r1.sol";
 
 contract DeployAnvil is BroadcasterScript, Test {
-  function run() external broadcast returns (address[4] memory) {
+  function run() external broadcast returns (address[5] memory) {
     EntryPointSimulations entryPoint = new EntryPointSimulations();
     console2.log("entrypoint", address(entryPoint));
 
@@ -33,6 +34,16 @@ contract DeployAnvil is BroadcasterScript, Test {
     paymaster.deposit{ value: 10 ether }();
     console2.log("paymaster deposit", paymaster.getDeposit());
 
-    return [address(entryPoint), webAuthnAddr, factory, address(paymaster)];
+    QuiVeutEtreMonNFT queVeutEtreMonNFT = new QuiVeutEtreMonNFT(
+      0x976EA74026E726554dB657fA54763abd0C3a0aa9
+    );
+
+    return [
+      address(entryPoint),
+      webAuthnAddr,
+      factory,
+      address(paymaster),
+      address(queVeutEtreMonNFT)
+    ];
   }
 }

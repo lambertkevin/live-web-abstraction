@@ -9,6 +9,7 @@ import type { CryptoCurrency } from '@ledgerhq/types-cryptoassets';
 import { authResponseToSigVerificationInput } from '../../libraries/webauthn/authResponseToSigVerificationInput';
 import { decodeRegistrationCredential } from '../../libraries/webauthn/decodeRegistrationCredential';
 import { SignerOption, SignerOptions, openNanoApp } from '../../helpers';
+import CoolPasskey from '../../components/CoolPasskey';
 import type { Signer } from '../../types';
 
 type Props = {
@@ -110,24 +111,43 @@ const SignerStep = ({ currency, signer, setSigner, goNextStep, username, token }
       <div className="px-6">
         <h1 className="text-lg pb-4 text-center">Pick a Signer for your {currency.name} account</h1>
         <div className="flex flex-row gap-4 py-4">
-          {SignerOptions.map((option) => (
-            <button
-              key={option.type}
-              onClick={() => {
-                setSigner({
-                  type: option.type,
-                  mode: option.mode,
-                } as Signer);
-                setSelectedOption(option);
-              }}
-              className={classNames([
-                'btn aspect-square flex-1 text-center disabled:pointer-events-auto disabled:cursor-not-allowed hover:border hover:border-accent',
-                signer?.type === option.type ? 'btn-accent' : '',
-              ])}
-            >
-              <span>{option.name}</span>
-            </button>
-          ))}
+          {SignerOptions.map((option) =>
+            option.mode === 'EOA' ? (
+              <button
+                key={option.type}
+                onClick={() => {
+                  setSigner({
+                    type: option.type,
+                    mode: option.mode,
+                  } as Signer);
+                  setSelectedOption(option);
+                }}
+                className={classNames([
+                  'btn aspect-square flex-1 text-center disabled:pointer-events-auto disabled:cursor-not-allowed hover:border hover:border-accent',
+                  signer?.type === option.type ? 'btn-accent' : '',
+                ])}
+              >
+                <span>{option.name}</span>
+              </button>
+            ) : (
+              <button
+                key={option.type}
+                onClick={() => {
+                  setSigner({
+                    type: option.type,
+                    mode: option.mode,
+                  } as Signer);
+                  setSelectedOption(option);
+                }}
+                className={classNames([
+                  'btn aspect-square flex-1 text-center disabled:pointer-events-auto disabled:cursor-not-allowed hover:glass relative overflow-hidden',
+                  signer?.type === option.type ? 'border-1 border-blue-600 border-opacity-40' : '',
+                ])}
+              >
+                <CoolPasskey text="Passkey" />
+              </button>
+            ),
+          )}
         </div>
       </div>
       <hr className="border-zinc-700 my-4" />
@@ -135,7 +155,7 @@ const SignerStep = ({ currency, signer, setSigner, goNextStep, username, token }
         {!(transportError?.message?.includes('user gesture') || transportError?.message?.includes('GATT')) ? (
           <button
             className="btn btn-primary"
-            onClick={goNextStep}
+            onClick={() => goNextStep()}
             disabled={
               !signer ||
               !!(signer.mode === 'EOA' && !signer?.transport) ||
