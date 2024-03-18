@@ -16,11 +16,12 @@ contract DeployAnvil is BroadcasterScript, Test {
     EntryPointSimulations entryPoint = new EntryPointSimulations();
     console2.log("entrypoint", address(entryPoint));
 
+    address namingServiceAddr = 0x14dC79964da2C08b23698B3D3cc7Ca32193d9955;
     address webAuthnAddr = address(new WebauthnVerifier256r1());
     console2.log("webAuthn", webAuthnAddr);
 
     address factory = address(
-      new LedgerAccountFactory(entryPoint, webAuthnAddr)
+      new LedgerAccountFactory(entryPoint, namingServiceAddr, webAuthnAddr)
     );
     console2.log("factory", factory);
 

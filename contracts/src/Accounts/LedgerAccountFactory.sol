@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
+import { console2 } from "forge-std/console2.sol";
 import { LedgerAccount } from "./LedgerAccount.sol";
 import { Create2 } from "@openzeppelin/utils/Create2.sol";
+import { ECDSA } from "@openzeppelin/utils/cryptography/ECDSA.sol";
 import { ERC1967Proxy } from "@openzeppelin/proxy/ERC1967/ERC1967Proxy.sol";
 import { IEntryPoint } from "@account-abstraction/interfaces/IEntryPoint.sol";
+import { MessageHashUtils } from "@openzeppelin/utils/cryptography/MessageHashUtils.sol";
 
 /**
  * A sample factory contract for WebAuthnAccount
@@ -15,8 +18,14 @@ import { IEntryPoint } from "@account-abstraction/interfaces/IEntryPoint.sol";
  */
 contract LedgerAccountFactory {
   LedgerAccount public immutable accountImplementation;
+  address immutable namingServiceSignerAddress;
 
-  constructor(IEntryPoint _entryPoint, address webAuthnVerifier) {
+  constructor(
+    IEntryPoint _entryPoint,
+    address _namingServiceSignerAddress,
+    address webAuthnVerifier
+  ) {
+    namingServiceSignerAddress = _namingServiceSignerAddress;
     accountImplementation = new LedgerAccount(
       _entryPoint,
       webAuthnVerifier,
@@ -51,7 +60,20 @@ contract LedgerAccountFactory {
       )
     );
 
-    acc.addFirstSigner(signerPayload);
+    bytes calldata namingServiceSignature = signerPayload[:65];
+    bytes calldata addSignerPayload = signerPayload[65:];
+
+    bytes memory message = abi.encodePacked(username, domain, addSignerPayload);
+    bytes32 messageHash = keccak256(message);
+    bytes32 digest = MessageHashUtils.toEthSignedMessageHash(messageHash);
+
+    require(
+      ECDSA.recover(digest, namingServiceSignature) ==
+        namingServiceSignerAddress,
+      "Invalid Naming Service Signature"
+    );
+
+    acc.addFirstSigner(addSignerPayload);
 
     return acc;
   }
