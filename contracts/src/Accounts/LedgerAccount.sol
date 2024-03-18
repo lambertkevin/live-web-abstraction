@@ -9,6 +9,7 @@ import { UUPSUpgradeable } from "@openzeppelin/proxy/utils/UUPSUpgradeable.sol";
 import { MessageHashUtils } from "@openzeppelin/utils/cryptography/MessageHashUtils.sol";
 import { PackedUserOperation } from "@account-abstraction/interfaces/PackedUserOperation.sol";
 import { TokenCallbackHandler } from "@account-abstraction/samples/callback/TokenCallbackHandler.sol";
+import { LedgerAccountSignatureLib } from "../Libraries/LedgerAccountSignature.sol";
 
 contract LedgerAccount is
   BaseAccount,
@@ -35,8 +36,8 @@ contract LedgerAccount is
   event LedgerAccountInitialized(
     IEntryPoint entryPoint,
     address indexed factoryAddr,
-    string indexed username,
-    string indexed domain
+    string username,
+    string domain
   );
 
   constructor(
@@ -138,7 +139,12 @@ contract LedgerAccount is
     PackedUserOperation calldata userOp,
     bytes32 userOpHash
   ) internal virtual override returns (uint256 validationData) {
-    return 0;
+    return
+      LedgerAccountSignatureLib.validateSignature(
+        userOp,
+        userOpHash,
+        webauthnVerifierAddr
+      );
   }
 
   /**
