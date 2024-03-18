@@ -1,3 +1,4 @@
+import axios from 'axios'
 import { BigNumber, BigNumberish, Signer } from 'ethers'
 import { JsonRpcProvider, Log, Provider } from '@ethersproject/providers'
 
@@ -143,15 +144,49 @@ export class UserOpMethodHandler {
       preOpGas
     } = returnInfo
 
-    // todo: use simulateHandleOp for this too...
-    const callGasLimit = await this.provider.estimateGas({
-      from: this.entryPoint.address,
-      to: userOp.sender,
-      data: userOp.callData
-    }).then(b => b.toNumber()).catch(err => {
-      const message = err.message.match(/reason="(.*?)"/)?.at(1) ?? 'execution reverted'
-      throw new RpcError(message, ValidationErrors.UserOperationReverted)
-    })
+    let callGasLimit: number;
+    if (userOp.factoryData) {
+      console.time("AXIOS GAS LIMIT");
+      const { data: stream } = await axios.post(
+        // @ts-ignore
+        this.provider.connection.url,
+        {
+          method: "debug_traceCall",
+          params: rpcParams,
+          id: 1,
+          jsonrpc: "2.0"
+        },
+        {
+          responseType: "stream",
+        }
+      );
+      const textDecoder = new TextDecoder();
+      callGasLimit = await new Promise((resolve) => {
+        const ChunkReader = (chunk: any) => {
+          const decodedData = textDecoder.decode(chunk);
+          const regexp = new RegExp('"gas":"?([0-9x]*)"?,');
+          resolve(BigNumber.from(regexp.exec(decodedData)?.[1] ||
+          `0x${(21_000).toString(16)}`).toNumber());
+          stream.off("data", ChunkReader);
+        };
+
+        stream.on("data", ChunkReader);
+      });
+      console.timeEnd("AXIOS GAS LIMIT");
+    } else {
+      callGasLimit = await this.provider
+        .estimateGas({
+          from: this.entryPoint.address,
+          to: userOp.sender,
+          data: userOp.callData
+        })
+        .then((b) => b.toNumber())
+        .catch((err) => {
+          const message =
+            err.message.match(/reason="(.*?)"/)?.at(1) ?? "execution reverted";
+            throw new RpcError(message, ValidationErrors.UserOperationReverted)
+        });
+    }
 
     const preVerificationGas = calcPreVerificationGas(userOp)
     const verificationGasLimit = BigNumber.from(preOpGas).toNumber()
