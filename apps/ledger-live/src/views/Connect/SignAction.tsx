@@ -27,7 +27,7 @@ export const SignAction = ({ selectedAccount, initialTransaction, sendParentMess
   if (!selectedAccount) throw Error('No account selected');
   if (!initialTransaction) throw Error('No transaction provided');
 
-  const { syncAccounts } = useAccountsStore();
+  const { syncAccounts, updateAccount } = useAccountsStore();
   useEffect(() => {
     syncAccounts();
   }, []);
@@ -99,14 +99,17 @@ export const SignAction = ({ selectedAccount, initialTransaction, sendParentMess
       }
       setCheckDevice(true);
       bridge.signOperation({ account: selectedAccount, deviceId: '', transaction }).subscribe({
-        next: (res) => {
+        next: async (res) => {
           if (res.type === 'signed') {
             setBroadcasting(true);
             setCheckDevice(false);
+
             bridge
               .broadcast({ account: selectedAccount, signedOperation: res.signedOperation })
-              .then(({ hash }) => {
-                onTransactionBroadcasted?.(hash);
+              .then((optimisticOperation) => {
+                console.log({ optimisticOperation });
+                updateAccount({ ...selectedAccount, pendingOperations: [optimisticOperation] });
+                onTransactionBroadcasted?.(optimisticOperation.hash);
                 setIsPending(false);
               })
               .finally(() => {
@@ -122,7 +125,7 @@ export const SignAction = ({ selectedAccount, initialTransaction, sendParentMess
         },
       });
     },
-    [bridge, selectedAccount, setIsPending, signer?.mode, status?.errors, transaction],
+    [bridge, selectedAccount, setIsPending, signer?.mode, status?.errors, transaction, updateAccount],
   );
 
   const mainBridgeError: Error | undefined = useMemo(

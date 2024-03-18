@@ -149,8 +149,8 @@ const OperationsHistory = ({ account }: Props) => {
               const isLastOp = i === ops.length - 1;
               const isInOp = ['IN', 'NFT_IN'].includes(op.type);
               const isNFTOp = ['NFT_IN', 'NFT_OUT'].includes(op.type);
-              const isSponsored = (op.extra as { sponsored?: boolean })?.sponsored;
-              const sponsoredFees = (op.extra as { sponsoredFees?: BigNumber })?.sponsoredFees;
+              const isSponsored = Boolean((op.extra as { sponsored?: boolean })?.sponsored);
+              const sponsoredFees = new BigNumber((op.extra as { sponsoredFees?: BigNumber })?.sponsoredFees || 0);
               const currency = account.type === 'Account' ? account.currency : account.token;
 
               return (
@@ -185,7 +185,7 @@ const OperationsHistory = ({ account }: Props) => {
                           <div className="badge badge-accent uppercase text-xs">
                             sponsored
                             {sponsoredFees
-                              ? ` (${parseFloat(sponsoredFees.dividedBy(10 ** currency.units[0].magnitude).toFixed(8))} ${currency.units[0].code})`
+                              ? ` (${parseFloat(sponsoredFees?.dividedBy?.(10 ** currency.units[0].magnitude)?.toFixed(8) || '0')} ${currency.units[0].code})`
                               : null}
                           </div>
                         ) : null}

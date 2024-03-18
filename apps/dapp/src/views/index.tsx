@@ -1,4 +1,6 @@
+import axios from 'axios';
 import { ethers } from 'ethers';
+import isEqual from 'lodash/isEqual';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import nftAbi from '../abis/nft.abi.json';
 import { toRawEthersTransaction } from '../helpers';
@@ -96,6 +98,38 @@ export const IndexView = () => {
     }
   }, [address]);
 
+  const [nfts, setNfts] = useState<Record<string, any>[]>([]);
+  useEffect(() => {
+    const getNfts = async () => {
+      const bag = [];
+      if (address) {
+        for (let i = 1; i <= 50; i++) {
+          const owner = await nftContract.ownerOf(i).catch(() => '');
+          if (owner !== address) continue;
+          const metadataIpfs = await nftContract.tokenURI(i);
+          const { data: metadata } = await axios.get<Record<string, any>>(
+            `https://cloudflare-ipfs.com/ipfs/${metadataIpfs.replace('ipfs://', '')}`,
+          );
+          bag.push({
+            index: i,
+            ...metadata,
+            image: `https://cloudflare-ipfs.com/ipfs/${metadata.image.replace('ipfs://', '')}`,
+          });
+        }
+
+        if (!isEqual(bag, nfts)) {
+          setNfts(bag);
+        }
+      }
+    };
+
+    const to = setTimeout(getNfts, 500);
+
+    return () => {
+      clearTimeout(to);
+    };
+  }, [address, nfts, nftBalance]);
+
   return (
     <div className="flex flex-col flex-grow">
       <div className="flex flex-row justify-end p-4">
@@ -173,6 +207,30 @@ export const IndexView = () => {
           </div>
         </div>
       </div>
+
+      {nfts.length ? (
+        <div className="flex flex-col items-center mt-10">
+          <h1 className="text-xl font-bold border-b border-lime-500 mb-4">Mes NFTs de Millionaires $$</h1>
+          <div className="carousel rounded-box gap-2 justify-center">
+            {nfts.map((nft) => (
+              <div key={nft.index} className="carousel-item w-1/5">
+                <div className="card glass">
+                  <figure>
+                    <img src={nft.image} />
+                  </figure>
+                  <div className="card-body">
+                    <h2 className="card-title">
+                      #{nft.index} {nft.title}
+                    </h2>
+                    <p>{nft.description}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       <dialog ref={dialog} className="modal">
         <div className="modal-box p-0 rounded shadow-xl overflow-hidden aspect-[1/3] select-none">
           <iframe
