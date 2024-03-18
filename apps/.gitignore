@@ -1,0 +1,4 @@
+.vite
+
+bundler/submodules/*
+!bundler/submodules/.gitkepp
