@@ -18,6 +18,19 @@ services:
     mem_swappiness: 100
     memswap_limit: 32G
     command: ./run.sh
+  
+  paymaster:
+    image: "node:20-buster-slim"
+    user: "root"
+    volumes:
+      - ./paymaster:/app
+    restart: always
+    env_file:
+      - .env
+    working_dir: /app
+    ports:
+      - "${PAYMASTER_PORT}:${PAYMASTER_PORT}"
+    command: ./run.sh
 
   ledger-live:
     image: "node:20-buster-slim"

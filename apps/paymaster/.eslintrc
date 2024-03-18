@@ -1,0 +1,25 @@
+{
+  "extends": [
+    "eslint:recommended",
+    "plugin:import/recommended",
+    "plugin:@typescript-eslint/recommended",
+    "prettier"
+  ],
+  "plugins": ["prettier"],
+  "settings": {
+    "import/resolver": {
+      "node": {
+        "paths": [
+          "src"
+        ],
+        "extensions": [
+          ".js",
+          ".ts"
+        ]
+      }
+    }
+  },
+  "rules": {
+    "prettier/prettier": ["error"]
+  }
+}
