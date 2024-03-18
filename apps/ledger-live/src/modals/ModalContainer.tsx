@@ -1,13 +1,15 @@
 import { memo, useEffect, useRef } from 'react';
-import { useModalStore } from '../store';
-import AddAccountModal from './AddAccount';
 import AddSmartAccountModal from './AddSmartContractAccount';
+import AddAccountModal from './AddAccount';
+import ReceiveModal from './Receive';
+import { useModalStore } from '../store';
 import SendModal from './Send';
 
 const Modals: Record<string, React.MemoExoticComponent<(props: any) => React.JSX.Element>> = {
-  send: SendModal,
+  Send: SendModal,
   AddAccount: AddAccountModal,
   AddSmartAccount: AddSmartAccountModal,
+  Receive: ReceiveModal,
 };
 
 const ModalContainer = () => {

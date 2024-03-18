@@ -98,12 +98,15 @@ const Account = () => {
           )}
           <button
             className="btn btn-primary rounded-full ring-2 ring-transparent hover:ring-opacity-50 hover:ring-violet-500"
-            onClick={() => openModal('send', { accountId: account.id })}
+            onClick={() => openModal('Send', { accountId: account.id })}
           >
             <ArrowFromBottom />
             Send
           </button>
-          <button className="btn btn-primary rounded-full ring-2 ring-transparent hover:ring-opacity-50 hover:ring-violet-500">
+          <button
+            className="btn btn-primary rounded-full ring-2 ring-transparent hover:ring-opacity-50 hover:ring-violet-500"
+            onClick={() => openModal('Receive', { accountId: account.id })}
+          >
             <ArrowToBottom />
             Receive
           </button>

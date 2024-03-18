@@ -32,11 +32,9 @@ const Accounts = () => {
       </div>
       {accounts.length ? (
         <div>
-          <ul>
-            {accounts.map((account) => (
-              <AccountPreview key={account.id} account={account} onClick={onClick} />
-            ))}
-          </ul>
+          {accounts.map((account) => (
+            <AccountPreview key={account.id} account={account} onClick={onClick} />
+          ))}
         </div>
       ) : (
         <div className="flex flex-col flex-grow items-center justify-center">
