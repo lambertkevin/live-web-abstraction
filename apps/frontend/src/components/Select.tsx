@@ -2,7 +2,7 @@ import { memo } from 'react';
 import classNames from 'classnames';
 import { default as ReactSelect, components } from 'react-select';
 import type { ControlProps, Props as ReactSelectProps } from 'react-select';
-import MagGlass from '../components/icons/MagGlass';
+import MagGlass from './icons/MagGlass';
 import { theme } from '../config';
 
 type Props = Omit<ReactSelectProps, 'classnames'>;

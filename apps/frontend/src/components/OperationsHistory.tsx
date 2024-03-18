@@ -3,7 +3,7 @@ import groupBy from 'lodash/groupBy';
 import React, { memo, useCallback, useMemo, useState } from 'react';
 import type { Account, TokenAccount, OperationType } from '@ledgerhq/types-live';
 import { useCurrencyPriceStore } from '../store';
-import { iconsList } from '../components/icons';
+import { iconsList } from './icons';
 import classNames from 'classnames';
 import { theme } from '../config';
 import ChevronUp from './icons/ChevronUp';

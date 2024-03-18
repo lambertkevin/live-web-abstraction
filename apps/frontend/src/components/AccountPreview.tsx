@@ -1,10 +1,10 @@
 import { memo, useCallback, useMemo, useState } from 'react';
 import type { Account, TokenAccount } from '@ledgerhq/types-live';
 import { useAccountsStore, useCurrencyPriceStore } from '../store';
-import CurrencyIcon from '../components/icons/CurrencyIcon';
-import ChevronUp from '../components/icons/ChevronUp';
-import Check from '../components/icons/Check';
-import Star from '../components/icons/Star';
+import CurrencyIcon from './icons/CurrencyIcon';
+import ChevronUp from './icons/ChevronUp';
+import Check from './icons/Check';
+import Star from './icons/Star';
 import { theme } from '../config';
 
 type Props = {
