@@ -1,6 +1,6 @@
 import { ServerRegisterPluginObject } from '@hapi/hapi';
-import { ApiExample } from './ApiExample';
+import { SponsorApi } from './SponsorApi';
 
-const plugins: ServerRegisterPluginObject<unknown>[] = [{ plugin: ApiExample, routes: { prefix: '/api' } }];
+const plugins: ServerRegisterPluginObject<unknown>[] = [{ plugin: SponsorApi }];
 
 export default plugins;

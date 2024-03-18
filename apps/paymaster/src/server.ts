@@ -1,5 +1,5 @@
 import { server as makeServer } from '@hapi/hapi';
-import { nodeConfig } from './config';
+import { nodeConfig, signer } from './config';
 import apis from './api';
 
 export default async () => {
@@ -8,6 +8,7 @@ export default async () => {
     await server.register(apis);
     await server.start();
     console.log('Server running on %s', server.info.uri);
+    console.log("Paymaster's Address:", signer.address);
 
     return server;
   } catch (err) /* istanbul ignore next */ {

@@ -3,11 +3,12 @@
     "composite": true,
     "skipLibCheck": true,
     "module": "CommonJS",
-    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
     "types": ["node"],
-    "typeRoots": [ "./node_modules/@types" ]
+    "typeRoots": ["./node_modules/@types"]
   },
   "include": ["src"]
 }
