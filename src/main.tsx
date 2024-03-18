@@ -10,15 +10,17 @@ import './index.css';
 
 const AppLayout = memo(() => {
   return (
-    <main className="flex flex-row min-h-full">
+    <main className="flex flex-row min-h-[100vh] flex-grow">
       <Sidebar />
-      <div className="flex-grow pl-64 pr-6 py-2">
+      <div className="flex flex-col flex-grow pl-64 pr-6 py-2">
         <TopBar />
-        <div className="flex-grow">
+        <div className="flex flex-grow">
           <Outlet />
         </div>
       </div>
-      <ModalContainer />
+      <div>
+        <ModalContainer />
+      </div>
     </main>
   );
 });

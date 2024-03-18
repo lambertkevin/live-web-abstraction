@@ -1,56 +1,17 @@
 import isEqual from 'lodash/isEqual';
 import debounce from 'lodash/debounce';
 import Eth from '@ledgerhq/hw-app-eth';
-import TransportWebUsb from '@ledgerhq/hw-transport-webusb';
 import type { Account } from '@ledgerhq/types-live';
-import type Transport from '@ledgerhq/hw-transport';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { buildAccountBridge } from '@ledgerhq/coin-evm/lib/bridge/js';
 import type { Transaction, TransactionStatus } from '@ledgerhq/coin-evm/lib/types/transaction';
-
-const openEthereumApp = async (): Promise<Transport> => {
-  const transport = await TransportWebUsb.create().catch((eee) => {
-    console.log({ eee });
-    throw eee;
-  });
-  console.log('Create new transport');
-  // getAppAndVersion
-  const getAppAndVersionBuffer = await transport.send(0xb0, 0x01, 0x00, 0x00).catch((eeee) => {
-    console.log({ eeee });
-    throw eeee;
-  });
-  console.log({ getAppAndVersionBuffer });
-  const nanoAppNameLength = getAppAndVersionBuffer[1];
-  const nanoAppName = getAppAndVersionBuffer.slice(2, 2 + nanoAppNameLength).toString('ascii');
-  console.log({ nanoAppName });
-
-  if (nanoAppName !== 'Ethereum') {
-    console.log('Not in Ethereum App');
-    // quitApp
-    await transport.send(0xb0, 0xa7, 0x00, 0x00);
-    console.log('Back to dashboard');
-    console.log('Requesting Ethereum App');
-    // open Ethereum
-    await transport.send(0xe0, 0xd8, 0x00, 0x00, Buffer.from('Ethereum'));
-    console.log('Should be opened now');
-
-    await transport.close();
-    console.log('closing the transport');
-    await new Promise((resolve) => {
-      setTimeout(() => resolve(undefined), 2500);
-    });
-    console.log('waiting 2.5s');
-    // retry
-    return openEthereumApp();
-  }
-  return transport;
-};
+import { openNanoApp } from '../helpers';
 
 export const useBridge = (account: Account, _transaction?: Transaction) => {
   const bridge = useMemo(
     () =>
       buildAccountBridge(async (deviceId: string, fn) => {
-        const transport = await openEthereumApp();
+        const transport = await openNanoApp(account.currency.managerAppName, 'ledger-usb');
         const signer = new Eth(transport);
         return fn(signer);
       }),

@@ -49,7 +49,7 @@ const Account = () => {
 
   if (!account || !currency) return null;
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col flex-grow gap-8">
       <div>
         <header className="flex flex-row gap-1 justify-between mb-4">
           <div className="flex flex-row gap-1">

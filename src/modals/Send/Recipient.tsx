@@ -147,7 +147,11 @@ const RecipientStep = ({
       </div>
       <hr className="border-zinc-700 my-4" />
       <div className="flex px-6 justify-end">
-        <button className="btn btn-primary" disabled={!!errors?.recipient || isPending} onClick={goNextStep}>
+        <button
+          className="btn btn-primary"
+          disabled={!recipient || !!errors?.recipient || isPending}
+          onClick={goNextStep}
+        >
           <span className={isPending ? 'opacity-0' : ''}>Continue</span>
           {isPending ? <span className="loading loading-spinner loading-md absolute"></span> : null}
         </button>

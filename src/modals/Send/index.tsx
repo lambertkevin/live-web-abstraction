@@ -17,7 +17,6 @@ const STEPS = ['Recipients', 'Amount', 'Summary', 'Signature'];
 
 const SendModal = ({ accountId }: Props) => {
   const { accounts, setSyncInterval, syncInterval } = useAccountsStore();
-  const [step, setStep] = useState(0);
   const [selectedAccount, setSelectedAccount] = useState<Account | TokenAccount>(
     accounts
       .flatMap((account) => [
@@ -37,6 +36,7 @@ const SendModal = ({ accountId }: Props) => {
 
   const { transaction, status, updateTransaction, isPending, bridge } = useBridge(mainAccount!);
 
+  const [step, setStep] = useState(0);
   const goNextStep = useCallback(() => {
     setStep(Math.min(step + 1, STEPS.length - 1));
   }, [step]);

@@ -11,7 +11,7 @@ const TopBar = () => {
   }, [accountStore]);
 
   return (
-    <div className="flex flex-col h-10 items-end justify-center content-stretch mb-5">
+    <div className="flex flex-col h-10 items-end justify-center content-stretch mb-5 flex-grow-0">
       <button className="btn btn-transparent text-base" onClick={onClick}>
         {accountStore.isSyncing ? (
           <>

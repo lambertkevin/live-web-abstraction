@@ -16,6 +16,7 @@
     "@ledgerhq/cryptoassets": "^11.4.0",
     "@ledgerhq/hw-app-eth": "^6.35.4",
     "@ledgerhq/hw-transport": "^6.30.4",
+    "@ledgerhq/hw-transport-web-ble": "^6.28.4",
     "@ledgerhq/hw-transport-webusb": "^6.28.3",
     "@nivo/line": "^0.84.0",
     "@rollup/plugin-inject": "^5.0.5",

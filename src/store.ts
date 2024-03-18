@@ -2,7 +2,7 @@ import axios from 'axios';
 import { create } from 'zustand';
 import type { Account, TokenAccount } from '@ledgerhq/types-live';
 import { devtools, subscribeWithSelector } from 'zustand/middleware';
-import { buildAccountBridge } from '@ledgerhq/coin-evm/lib/bridge/js';
+import { buildAccountBridge, buildCurrencyBridge } from '@ledgerhq/coin-evm/lib/bridge/js';
 import { getCryptoCurrencyById } from '@ledgerhq/cryptoassets/lib/currencies';
 import { makeAccount } from '@ledgerhq/coin-evm/lib/__tests__/fixtures/common.fixtures';
 
@@ -16,25 +16,24 @@ type AccountsStore = {
   updateAccount: (account: Account) => void;
 };
 
-const account = makeAccount('0x6cBCD73CD8e8a42844662f0A0e76D7F79Afd933d', getCryptoCurrencyById('ethereum_goerli'));
-const account2 = makeAccount('0x6cBCD73CD8e8a42844662f0A0e76D7F79Afd933d', getCryptoCurrencyById('polygon'));
-
 export const useAccountsStore = create<AccountsStore>()(
   devtools(
     subscribeWithSelector((set, get) => ({
-      accounts: [account, account2],
+      accounts: [],
       isSyncing: false,
       syncInterval: 2 * 60 * 1000,
       setSyncInterval(syncInterval) {
         set(() => ({ syncInterval }));
       },
       async syncAccounts() {
+        const currencyBridge = buildCurrencyBridge(() => ({}) as any);
         const accountBridge = buildAccountBridge(() => ({}) as any);
 
         set(() => ({ isSyncing: true }));
         const accounts = await Promise.all(
-          get().accounts.map((account) =>
-            accountBridge
+          get().accounts.map(async (account) => {
+            await currencyBridge.preload(account.currency);
+            return accountBridge
               .sync(account, { paginationConfig: {} })
               .toPromise()
               .then((updater) => {
@@ -44,8 +43,8 @@ export const useAccountsStore = create<AccountsStore>()(
               .catch((e) => {
                 console.error('SYNC ERROR', e);
                 throw e;
-              }),
-          ),
+              });
+          }),
         );
 
         set(() => ({

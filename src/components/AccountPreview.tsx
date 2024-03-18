@@ -35,7 +35,7 @@ const AccountPreview = ({ account, onClick }: Props) => {
       className="bg-zinc-900 py-2 mb-3 rounded border border-transparent hover:border-zinc-600 hover:cursor-pointer"
       onClick={() => onClick?.(account.id)}
     >
-      <div className="pt-1 px-5 flex flex-row items-center justify-between">
+      <div className="py-1 px-5 flex flex-row items-center justify-between">
         <div className="w-4/12">
           <div className="flex flex-row items-center gap-3">
             <CurrencyIcon currency={account.currency} color={account.currency.color} size={24} />
@@ -72,7 +72,7 @@ const AccountPreview = ({ account, onClick }: Props) => {
         </div>
       </div>
       {tokenAccounts.length ? (
-        <div className="pt-4">
+        <div className="pt-4 -mt-1">
           {showTokenAccounts &&
             tokenAccounts.map((tokenAccount) => (
               <div
