@@ -71,8 +71,13 @@ const OperationsHistory = ({ account }: Props) => {
               return (
                 <div
                   key={op.id}
+                  onClick={() => {
+                    const mainCurrency =
+                      account.type === 'TokenAccount' ? account.token.parentCurrency : account.currency;
+                    window.open(mainCurrency.explorerViews[0].tx?.replace('$hash', op.hash));
+                  }}
                   className={classNames([
-                    'flex flex-row items-center px-4 py-5 justify-stretch animate-pulse bg-zinc-700',
+                    'flex flex-row items-center px-4 py-5 justify-stretch animate-pulse bg-zinc-700 cursor-pointer hover:bg-zinc-800',
                     !isLastOp ? 'border-b-zinc-700 border-b' : null,
                   ])}
                 >
@@ -156,8 +161,13 @@ const OperationsHistory = ({ account }: Props) => {
               return (
                 <div
                   key={op.id}
+                  onClick={() => {
+                    const mainCurrency =
+                      account.type === 'TokenAccount' ? account.token.parentCurrency : account.currency;
+                    window.open(mainCurrency.explorerViews[0].tx?.replace('$hash', op.hash));
+                  }}
                   className={classNames([
-                    'flex flex-row items-center px-4 py-5 justify-stretch',
+                    'flex flex-row items-center px-4 py-5 justify-stretch cursor-pointer hover:bg-zinc-800',
                     !isLastOp ? 'border-b-zinc-700 border-b' : null,
                   ])}
                 >
