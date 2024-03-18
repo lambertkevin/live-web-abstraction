@@ -37,6 +37,8 @@ contract DeployAnvil is BroadcasterScript, Test {
     QuiVeutEtreMonNFT queVeutEtreMonNFT = new QuiVeutEtreMonNFT(
       0x976EA74026E726554dB657fA54763abd0C3a0aa9
     );
+    payable(address(queVeutEtreMonNFT)).transfer(10 ether);
+    console2.log("balance", address(queVeutEtreMonNFT).balance);
 
     return [
       address(entryPoint),

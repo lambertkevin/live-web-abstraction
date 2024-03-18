@@ -13,10 +13,15 @@ contract QuiVeutEtreMonNFT is ERC721, Ownable {
 
   function mint() external returns (uint256 tokenId) {
     _safeMint(msg.sender, ++_lastTokenId);
+    payable(msg.sender).transfer(0.05 ether);
     return _lastTokenId;
   }
 
-  function _baseURI() internal pure override returns (string memory) {
-    return "ipfs://QmeSjSinHpPnmXmspMjwiXyN6zS4E9zccariGR3jxcaWtq/";
+  function tokenURI(
+    uint256 tokenId
+  ) public pure override returns (string memory) {
+    return "ipfs://QmRrL6RVeAty48eajd7whHdwvtt6ZcXYmKT8dNwDAo1Njq";
   }
+
+  receive() external payable {}
 }
