@@ -16,6 +16,7 @@ type Props = {
   signer: Signer | undefined;
   setSigner: (transport: Signer) => void;
   username: string;
+  token: string | undefined;
   goNextStep: () => void;
 };
 
@@ -67,7 +68,7 @@ const createPasskey = async (username: string) => {
   };
 };
 
-const SignerStep = ({ currency, signer, setSigner, goNextStep, username }: Props) => {
+const SignerStep = ({ currency, signer, setSigner, goNextStep, username, token }: Props) => {
   const [transportError, setTransportError] = useState<Error | undefined>();
   const [selectedOption, setSelectedOption] = useState<SignerOption | undefined>();
 
@@ -80,7 +81,7 @@ const SignerStep = ({ currency, signer, setSigner, goNextStep, username }: Props
               if (transport) {
                 (async () => {
                   const { address } = await new Eth(transport).getAddress("44'/60'/0'/0/0");
-                  setSigner({ ...signer, transport, username, domain: 'ledger.com', address });
+                  setSigner({ ...signer, transport, username, domain: 'ledger.com', address, token });
                 })();
               }
               setTransportError(transErr || undefined);
@@ -97,11 +98,12 @@ const SignerStep = ({ currency, signer, setSigner, goNextStep, username }: Props
             credId,
             credIdHash,
             pubKey,
+            token,
           });
         }
       }
     })();
-  }, [currency.managerAppName, setSigner, signer, username]);
+  }, [currency.managerAppName, setSigner, signer, username, token]);
 
   return (
     <>

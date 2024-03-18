@@ -17,12 +17,12 @@ const AccountStep = ({ signer, currency }: Props) => {
   const { addAccount } = useAccountsStore();
   const { closeModal } = useModalStore();
 
-  // useEffect(() => {
-  //   (async () => {
-  //     const { preload } = buildCurrencyBridge(() => ({}) as any);
-  //     await preload(currency);
-  //   })();
-  // }, []);
+  useEffect(() => {
+    (async () => {
+      const { preload } = buildCurrencyBridge(() => ({}) as any);
+      await preload(currency);
+    })();
+  }, []);
 
   useEffect(() => {
     if (!signer) return;

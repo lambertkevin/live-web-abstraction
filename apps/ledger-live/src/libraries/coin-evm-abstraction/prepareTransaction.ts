@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { ethers } from 'ethers';
 import { BigNumber } from 'bignumber.js';
 import type { AccountBridge, TokenAccount } from '@ledgerhq/types-live';
@@ -83,17 +84,47 @@ export const prepareTransaction: AccountBridge<EvmAbstractionTransaction>['prepa
   const shouldDeployAccount = !hasCode && username && domain;
   // const [, username, domain] = new RegExp(/(.*)\.(.*\.[a-z]{2,})$/g).exec(account.seedIdentifier) || [];
 
-  const initCode = shouldDeployAccount
-    ? {
-        factory: import.meta.env.VITE_WALLETFACTORY_CONTRACT,
-        factoryData: Buffer.from(
-          factoryContract.interface
-            .encodeFunctionData('createAccount', [username, domain, 0, craftAddSignerPayload(transaction.signer!)])
-            .slice(2),
-          'hex',
-        ),
-      }
-    : {};
+  const signedAddSignerPayload =
+    shouldDeployAccount && transaction.signer
+      ? await axios
+          .post<string>(
+            `${import.meta.env.VITE_NAMING_SERVICE}lock/sign`,
+            transaction.signer.mode === 'EOA'
+              ? {
+                  type: 'EOA',
+                  address: transaction.signer.address,
+                }
+              : {
+                  type: 'WEBAUTHN',
+                  credId: transaction.signer.credId,
+                  pubKey: transaction.signer.pubKey,
+                },
+            {
+              headers: {
+                Authorization: `Bearer ${transaction.signer!.token}`,
+              },
+            },
+          )
+          .then(({ data }) => data)
+      : null;
+
+  const initCode =
+    shouldDeployAccount && signedAddSignerPayload
+      ? {
+          factory: import.meta.env.VITE_WALLETFACTORY_CONTRACT,
+          factoryData: Buffer.from(
+            factoryContract.interface
+              .encodeFunctionData('createAccount', [
+                username,
+                domain,
+                0,
+                Buffer.from(signedAddSignerPayload.slice(2), 'hex'),
+              ])
+              .slice(2),
+            'hex',
+          ),
+        }
+      : {};
 
   const callData = transaction.recipient.match(ethAddressRegEx)
     ? Buffer.from(

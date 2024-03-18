@@ -13,21 +13,28 @@ const AddSmartContractAccount = () => {
   const [selectedCurrency, setSelectedCurrency] = useState<CryptoCurrency | undefined>();
   const [username, setUsername] = useState('');
   const [signer, setSigner] = useState<Signer>();
+  const [token, setToken] = useState<string>();
 
   const [step, setStep] = useState(0);
-  const goNextStep = useCallback(() => {
-    setStep(Math.min(step + 1, STEPS.length - 1));
-  }, [step]);
-  const goPreviousStep = useCallback(() => {
-    setStep(Math.max(step - 1, 0));
-  }, [step]);
+  const goNextStep = useCallback(
+    (stepsToSkip = 1) => {
+      setStep(Math.min(step + stepsToSkip, STEPS.length - 1));
+    },
+    [step],
+  );
+  const goPreviousStep = useCallback(
+    (stepsToSkip = 1) => {
+      setStep(Math.max(step - stepsToSkip, 0));
+    },
+    [step],
+  );
 
   return (
     <>
       {step > 0 && (
         <div
           className="absolute left-4 pt-2 text-zinc-500 hover:text-inherit hover:cursor-pointer"
-          onClick={goPreviousStep}
+          onClick={() => goPreviousStep()}
         >
           {'< Back'}
         </div>
@@ -49,13 +56,22 @@ const AddSmartContractAccount = () => {
           goNextStep={goNextStep}
         />
       )}
-      {step === 1 && <UsernameStep username={username} setUsername={setUsername} goNextStep={goNextStep} />}
+      {step === 1 && (
+        <UsernameStep
+          username={username}
+          setUsername={setUsername}
+          setToken={setToken}
+          setSigner={setSigner}
+          goNextStep={goNextStep}
+        />
+      )}
       {step === 2 && (
         <SignerStep
           currency={selectedCurrency!}
           signer={signer}
           setSigner={setSigner}
           username={username}
+          token={token}
           goNextStep={goNextStep}
         />
       )}

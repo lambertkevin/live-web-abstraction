@@ -93,7 +93,7 @@ const AssetStep = ({ selectedCurrency, setSelectedCurrency, goNextStep }: Props)
       </div>
       <hr className="border-zinc-700 my-4 mt-10" />
       <div className="flex px-6 justify-end items-center">
-        <button className="btn btn-primary" disabled={!selectedCurrency} onClick={goNextStep}>
+        <button className="btn btn-primary" disabled={!selectedCurrency} onClick={() => goNextStep()}>
           <span>Continue</span>
         </button>
       </div>

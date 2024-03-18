@@ -5,6 +5,7 @@ import type { BigNumberish, BytesLike } from 'ethers';
 export type Signer = {
   username?: string;
   domain?: string;
+  token?: string;
 } & (
   | {
       type: 'ledger-usb';
