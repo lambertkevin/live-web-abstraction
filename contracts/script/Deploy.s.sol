@@ -7,11 +7,12 @@ import { EntryPointSimulations } from "@account-abstraction/core/EntryPointSimul
 import { PackedUserOperation } from "@account-abstraction/interfaces/PackedUserOperation.sol";
 
 import { BroadcasterScript } from "./Broadcaster.s.sol";
+import { Paymaster } from "../src/Paymaster/Paymaster.sol";
 import { LedgerAccountFactory } from "../src/Accounts/LedgerAccountFactory.sol";
 import { WebauthnVerifier256r1 } from "../src/Webauthn/WebauthnVerifier256r1.sol";
 
 contract DeployAnvil is BroadcasterScript, Test {
-  function run() external broadcast returns (address[3] memory) {
+  function run() external broadcast returns (address[4] memory) {
     EntryPointSimulations entryPoint = new EntryPointSimulations();
     console2.log("entrypoint", address(entryPoint));
 
@@ -23,6 +24,14 @@ contract DeployAnvil is BroadcasterScript, Test {
     );
     console2.log("factory", factory);
 
-    return [address(entryPoint), webAuthnAddr, factory];
+    Paymaster paymaster = new Paymaster(
+      entryPoint,
+      0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f
+    );
+    console2.log("paymaster", address(paymaster));
+    paymaster.deposit{ value: 10 ether }();
+    console2.log("paymaster deposit", paymaster.getDeposit());
+
+    return [address(entryPoint), webAuthnAddr, factory, address(paymaster)];
   }
 }
