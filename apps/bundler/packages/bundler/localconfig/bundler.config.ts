@@ -1,4 +1,3 @@
-console.log(process.env);
 export default {
   gasFactor: "1",
   port: process.env.BUNDLER_PORT,
