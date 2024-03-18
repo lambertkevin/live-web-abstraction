@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en" data-theme="ledger" class="bg-zinc-950">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ledger Live Abstraction</title>
+    <script>
+      window.global = window;
+    </script>
+    <script type="module">
+      import { Buffer } from 'buffer';
+      window.Buffer = Buffer;
+    </script>
+  </head>
+  <body class="text-gray-300 w-screen min-h-screen text-base">
+    <div id="root" class="w-full h-full"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,5 @@
+.has-value {
+  .subaccount {
+    @apply border-none pl-0 py-3;
+  }
+}
