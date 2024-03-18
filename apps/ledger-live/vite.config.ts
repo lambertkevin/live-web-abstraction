@@ -7,6 +7,10 @@ import svgr from 'vite-plugin-svgr';
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react(), svgr()],
+  server: {
+    host: true,
+    port: Number(process.env.FRONTEND_PORT) || 1234,
+  },
   optimizeDeps: {
     esbuildOptions: {
       // Node.js global to browser globalThis
