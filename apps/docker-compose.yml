@@ -31,6 +31,30 @@ services:
     ports:
       - "${PAYMASTER_PORT}:${PAYMASTER_PORT}"
     command: ./run.sh
+  
+  naming-service:
+    image: "node:20-buster-slim"
+    user: "root"
+    volumes:
+      - ./naming-service:/app
+    restart: always
+    env_file:
+      - .env
+    working_dir: /app
+    depends_on:
+      - naming-service-db
+    ports:
+      - "${NAMING_SERVICE_PORT}:${NAMING_SERVICE_PORT}"
+      - 5555:5555
+    command: ./run.sh
+
+  naming-service-db:
+    image: postgres:16
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - ./naming-service-db/data:/var/lib/postgresql/data
 
   ledger-live:
     image: "node:20-buster-slim"

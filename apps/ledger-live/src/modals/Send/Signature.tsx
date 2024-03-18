@@ -191,7 +191,7 @@ const SignatureStep = ({
         </>
       ) : null}
 
-      {error && (
+      {error && !signedOperation && (
         <>
           <div className="px-6">
             <div className="flex flex-row justify-center items-center">

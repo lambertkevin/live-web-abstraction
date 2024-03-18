@@ -2,3 +2,6 @@
 
 bundler/submodules/*
 !bundler/submodules/.gitkepp
+naming-service/.keys/*
+!naming-service/.keys/.gitkeep
+naming-service-db/data/*
