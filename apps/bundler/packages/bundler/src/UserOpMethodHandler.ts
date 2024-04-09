@@ -152,7 +152,7 @@ export class UserOpMethodHandler {
         this.provider.connection.url,
         {
           method: "debug_traceCall",
-          params: rpcParams,
+          params: simulationRpcParams('simulateHandleOp', this.entryPoint.address, userOp, [AddressZero, '0x'], {"disableStack": true, "disableStorage": true, "enableReturnData": false }),
           id: 1,
           jsonrpc: "2.0"
         },
