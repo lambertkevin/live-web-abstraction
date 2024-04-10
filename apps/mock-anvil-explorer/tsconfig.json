@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "skipLibCheck": true,
+    "module": "CommonJS",
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "types": ["node"],
+    "typeRoots": ["./node_modules/@types"]
+  },
+  "include": ["src"]
+}

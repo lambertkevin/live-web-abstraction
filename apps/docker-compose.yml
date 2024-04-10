@@ -10,6 +10,8 @@ services:
     env_file:
       - .env
     working_dir: /app
+    depends_on:
+      - anvil
     ports:
       - "${BUNDLER_PORT}:${BUNDLER_PORT}"
     cpus: 8
@@ -25,6 +27,8 @@ services:
     volumes:
       - ./paymaster:/app
     restart: always
+    depends_on:
+      - anvil
     env_file:
       - .env
     working_dir: /app
@@ -43,6 +47,7 @@ services:
     working_dir: /app
     depends_on:
       - naming-service-db
+      - anvil
     ports:
       - "${NAMING_SERVICE_PORT}:${NAMING_SERVICE_PORT}"
       - 5555:5555
@@ -71,7 +76,12 @@ services:
       - VITE_NAMING_SERVICE=${NAMING_SERVICE}
       - VITE_ENTRYPOINT=${ENTRYPOINT_CONTRACT}
       - VITE_WALLETFACTORY_CONTRACT=${FACTORY_CONTRACT}
+      - VITE_MOCK_ANVIL_EXPLORER=${MOCK_ANVIL_EXPLORER}
     working_dir: /app
+    depends_on:
+      - anvil
+      - bundler
+      - naming-service
     ports:
       - "${FRONTEND_PORT}:${FRONTEND_PORT}"
     command: ./run.sh
@@ -86,7 +96,31 @@ services:
       - .env
     environment:
       - VITE_NETWORK=${RPC}
+    depends_on:
+      - anvil
     working_dir: /app
     ports:
       - "${DAPP_PORT}:${DAPP_PORT}"
     command: ./run.sh
+
+  mock-anvil-explorer:
+    image: "node:20-buster-slim"
+    user: "root"
+    volumes:
+      - ./mock-anvil-explorer:/app
+    restart: always
+    env_file:
+      - .env
+    working_dir: /app
+    ports:
+      - "${MOCK_ANVIL_EXPLORER_PORT}:${MOCK_ANVIL_EXPLORER_PORT}"
+    command: ./run.sh
+
+  anvil:
+    image: ghcr.io/foundry-rs/foundry:latest
+    platform: linux/amd64
+    env_file:
+      - .env
+    ports:
+      - "8545:8545"
+    command: -c "anvil --steps-tracing --block-time 5 --host 0.0.0.0"

@@ -40,7 +40,7 @@ const AssetStep = ({ selectedCurrency, setSelectedCurrency, goNextStep }: Props)
           },
           explorer: {
             type: 'etherscan',
-            uri: 'http://localhost:43371',
+            uri: import.meta.env.VITE_MOCK_ANVIL_EXPLORER,
           },
         },
         explorerViews: [{}],
