@@ -4,6 +4,9 @@ import classNames from 'classnames';
 import { memo, useEffect, useState } from 'react';
 import { startAuthentication } from '@simplewebauthn/browser';
 import { Signer } from '../../types';
+import { openNanoApp } from '../../helpers';
+import Eth from '@ledgerhq/hw-app-eth';
+import { ethers } from 'ethers';
 
 type Props = {
   username: string;
@@ -70,25 +73,54 @@ const UsernameStep = ({ username, setUsername, goNextStep, setToken, setSigner }
           <button
             className="btn btn-primary"
             disabled={!credentials}
-            onClick={() =>
-              startAuthentication({
-                challenge: '',
-                allowCredentials: credentials.map((credId) => ({
-                  id: base64url.encode(Buffer.from(credId.slice(2), 'hex')),
-                  type: 'public-key',
-                  transports: ['internal', 'hybrid'],
-                })),
-              }).then(() => {
-                setSigner({
-                  mode: 'Webauthn',
-                  type: 'webauthn',
-                  username,
-                  domain,
-                  credId: credentials[0],
+            onClick={() => {
+              if (credentials[0]?.length === 42) {
+                openNanoApp('Ethereum', 'ledger-usb').then(async ([transport, transportError]) => {
+                  if (transportError) alert('Nope');
+                  const sig = await new Eth(transport!).signPersonalMessage(
+                    "44'/60'/0'/0/0",
+                    Buffer.from(`${username}.${domain}`).toString('hex'),
+                  );
+
+                  if (
+                    ethers.utils.verifyMessage(`${username}.${domain}`, {
+                      r: `0x${sig.r}`,
+                      s: `0x${sig.s}`,
+                      v: sig.v,
+                    })
+                  ) {
+                    setSigner({
+                      mode: 'EOA',
+                      type: 'ledger-usb',
+                      username,
+                      domain,
+                      address: credentials[0],
+                    });
+                    goNextStep(2);
+                  }
                 });
-                goNextStep(2);
-              })
-            }
+              } else if (credentials[0]?.length === 66) {
+                startAuthentication({
+                  challenge: '',
+                  allowCredentials: credentials
+                    .filter((c) => c.length === 66)
+                    .map((credId) => ({
+                      id: base64url.encode(Buffer.from(credId.slice(2), 'hex')),
+                      type: 'public-key',
+                      transports: ['internal', 'hybrid'],
+                    })),
+                }).then(() => {
+                  setSigner({
+                    mode: 'Webauthn',
+                    type: 'webauthn',
+                    username,
+                    domain,
+                    credId: credentials[0],
+                  });
+                  goNextStep(2);
+                });
+              }
+            }}
           >
             <span>Login</span>
           </button>

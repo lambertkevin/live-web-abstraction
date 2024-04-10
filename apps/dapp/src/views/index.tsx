@@ -207,14 +207,13 @@ export const IndexView = () => {
           </div>
         </div>
       </div>
-
       {nfts.length ? (
-        <div className="flex flex-col items-center mt-10">
+        <div className="flex flex-col items-center mt-10 w-screen">
           <h1 className="text-xl font-bold border-b border-lime-500 mb-4">Mes NFTs de Millionaires $$</h1>
-          <div className="carousel rounded-box gap-2 justify-center">
+          <div className="carousel rounded-box w-[99%] p-4 space-x-4 justify-center">
             {nfts.map((nft) => (
               <div key={nft.index} className="carousel-item w-1/5">
-                <div className="card glass">
+                <div className="card glass bg-white">
                   <figure>
                     <img src={nft.image} />
                   </figure>
@@ -238,7 +237,7 @@ export const IndexView = () => {
             className="w-full h-full select-none"
             src="http://localhost:4337/connect"
             sandbox="allow-forms allow-popups allow-scripts allow-same-origin"
-            allow="publickey-credentials-get *; usb; bluetooth;"
+            allow="publickey-credentials-get *; hid; bluetooth;"
             name="iframe-ledger"
             loading="eager"
           />

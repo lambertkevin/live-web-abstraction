@@ -83,6 +83,7 @@ const SignerStep = ({ currency, signer, setSigner, goNextStep, username, token }
                 (async () => {
                   const { address } = await new Eth(transport).getAddress("44'/60'/0'/0/0");
                   setSigner({ ...signer, transport, username, domain: 'ledger.com', address, token });
+                  await transport.close();
                 })();
               }
               setTransportError(transErr || undefined);

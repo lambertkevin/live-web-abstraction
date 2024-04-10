@@ -87,10 +87,11 @@ const AmountStep = ({ currency, isPending, status, goNextStep, updateTransaction
   useEffect(() => {
     updateTransaction(
       useMax
-        ? { useAllAmount: true }
+        ? { useAllAmount: true, callData: undefined }
         : {
             amount: new BigNumber(amount || 0).times(10 ** currency.units[0].magnitude),
             useAllAmount: false,
+            callData: undefined,
           },
     );
   }, [amount, useMax, currency.units, updateTransaction]);

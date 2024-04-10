@@ -36,11 +36,7 @@ export const SignAction = ({ selectedAccount, initialTransaction, sendParentMess
     () => selectedAccount.seedIdentifier.includes('.ledger.com'),
     [selectedAccount],
   );
-  const [signer, setSigner] = useState<Signer | undefined>(
-    selectedAccount.signers?.length === 1 && selectedAccount.signers[0].mode === 'Webauthn'
-      ? selectedAccount.signers[0]
-      : undefined,
-  );
+  const [signer, setSigner] = useState<Signer | undefined>();
 
   const [liveTransaction, setLiveTransaction] = useState<EvmTransaction | EvmAbstractionTransaction | undefined>();
   useEffect(() => {
@@ -58,7 +54,7 @@ export const SignAction = ({ selectedAccount, initialTransaction, sendParentMess
           preVerificationGas: new BigNumber(0),
           maxFeePerGas: new BigNumber(initialTransaction.maxFeePerGas || 0),
           maxPriorityFeePerGas: new BigNumber(initialTransaction.maxPriorityFeePerGas || 0),
-          signer: selectedAccount.signers![0],
+          signer,
           chainId: initialTransaction.chainId,
         }
       : {
@@ -84,9 +80,16 @@ export const SignAction = ({ selectedAccount, initialTransaction, sendParentMess
     isSmartContractAccount,
     selectedAccount.freshAddress,
     selectedAccount.signers,
+    selectedAccount,
+    signer,
   ]);
 
-  const { bridge, status, transaction, isPending, setIsPending } = useBridge(selectedAccount, liveTransaction, signer);
+  const { bridge, status, transaction, isPending, setIsPending, transport } = useBridge(
+    selectedAccount,
+    liveTransaction,
+    signer,
+  );
+
   const [error, setError] = useState<Error | undefined>();
   const [broadcasting, setBroadcasting] = useState(false);
   const [checkDevice, setCheckDevice] = useState(false);
@@ -98,14 +101,16 @@ export const SignAction = ({ selectedAccount, initialTransaction, sendParentMess
         setCheckDevice(true);
       }
       setCheckDevice(true);
+
       bridge.signOperation({ account: selectedAccount, deviceId: '', transaction }).subscribe({
-        next: async (res) => {
-          if (res.type === 'signed') {
+        async next(event) {
+          if (event.type === 'signed') {
             setBroadcasting(true);
             setCheckDevice(false);
+            await transport?.close();
 
             bridge
-              .broadcast({ account: selectedAccount, signedOperation: res.signedOperation })
+              .broadcast({ account: selectedAccount, signedOperation: event.signedOperation })
               .then((optimisticOperation) => {
                 console.log({ optimisticOperation });
                 updateAccount({ ...selectedAccount, pendingOperations: [optimisticOperation] });
@@ -117,15 +122,16 @@ export const SignAction = ({ selectedAccount, initialTransaction, sendParentMess
               });
           }
         },
-        error(err) {
+        async error(err) {
           console.log({ err });
           setError(err);
           setIsPending(false);
           setCheckDevice(false);
+          await transport?.close();
         },
       });
     },
-    [bridge, selectedAccount, setIsPending, signer?.mode, status?.errors, transaction, updateAccount],
+    [bridge, selectedAccount, setIsPending, signer?.mode, status?.errors, transaction, transport, updateAccount],
   );
 
   const mainBridgeError: Error | undefined = useMemo(
@@ -183,40 +189,46 @@ export const SignAction = ({ selectedAccount, initialTransaction, sendParentMess
             Connection to Ledger Live Web
           </span>
         </div>
-        {mainBridgeError ? (
+        {mainBridgeError && signer && !isPending ? (
           <div className="alert alert-error">{translateError(mainBridgeError?.name || 'Unknown Error')}</div>
         ) : null}
         {error ? <div className="alert alert-error">{translateError(error.name)}</div> : null}
         <div className="p-2 text-center text-lg">Would you like to sign this shit ?</div>
         <div>
-          {transactionConfig?.map((field, i) => (
-            <div key={i} className="flex flew-row justify-between">
-              <div className="w-4/12 text-sm text-zinc-400">{field.label}</div>
-              <div className="w-7/12 text-sm mb-2 text-right break-keep">
-                {field.type === 'amount' && (
-                  <>
-                    {transaction.amount.dividedBy(10 ** selectedAccount.currency.units[0].magnitude).toFixed()}{' '}
-                    {selectedAccount.currency.units[0].code}
-                  </>
-                )}
-                {field.type === 'address' && <span className="break-all">{field.address}</span>}
-                {field.type === 'text' && <span className="break-all">{field.value}</span>}
-                {field.type === 'fees' && (
-                  <>
-                    {status?.estimatedFees.dividedBy(10 ** selectedAccount.currency.units[0].magnitude).toFixed()}{' '}
-                    {selectedAccount.currency.units[0].code}
-                  </>
-                )}
+          {transactionConfig ? (
+            transactionConfig?.map((field, i) => (
+              <div key={i} className="flex flew-row justify-between">
+                <div className="w-4/12 text-sm text-zinc-400">{field.label}</div>
+                <div className="w-7/12 text-sm mb-2 text-right break-keep">
+                  {field.type === 'amount' && (
+                    <>
+                      {transaction.amount.dividedBy(10 ** selectedAccount.currency.units[0].magnitude).toFixed()}{' '}
+                      {selectedAccount.currency.units[0].code}
+                    </>
+                  )}
+                  {field.type === 'address' && <span className="break-all">{field.address}</span>}
+                  {field.type === 'text' && <span className="break-all">{field.value}</span>}
+                  {field.type === 'fees' && (
+                    <>
+                      {status?.estimatedFees.dividedBy(10 ** selectedAccount.currency.units[0].magnitude).toFixed()}{' '}
+                      {selectedAccount.currency.units[0].code}
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          ) : (
+            <>
+              <span className="loading loading-ring loading-lg"></span>
+            </>
+          )}
         </div>
         <div className="flex flex-row w-full px-4 py-2">
           <div className="flex flex-col flex-grow gap-3"></div>
         </div>
         <div className="flex flex-row w-full px-4 py-2">
           <div className="flex flex-col flex-grow gap-3">
-            {isSmartContractAccount && !mainBridgeError ? (
+            {isSmartContractAccount ? (
               <>
                 <div className="text-lg pb-2">Pick a Signer:</div>
                 <div className="flex flex-row flex-grow gap-4">
@@ -233,10 +245,15 @@ export const SignAction = ({ selectedAccount, initialTransaction, sendParentMess
                     .map((option) =>
                       option?.mode === 'EOA' ? (
                         <button
-                          key={option!.type}
+                          key={option.type}
                           disabled={isPending}
-                          onClick={() => {
-                            setSigner(option!.signer);
+                          onClick={async () => {
+                            setSigner({
+                              ...option.signer,
+                              transport,
+                              type: option.type,
+                              mode: option.mode,
+                            } as Signer);
                           }}
                           className={classNames([
                             'btn flex-1 text-center disabled:pointer-events-auto disabled:cursor-not-allowed hover:border hover:border-accent',
@@ -250,7 +267,11 @@ export const SignAction = ({ selectedAccount, initialTransaction, sendParentMess
                           key={option!.type}
                           disabled={isPending}
                           onClick={() => {
-                            setSigner(option!.signer);
+                            setSigner({
+                              ...option!.signer,
+                              type: option!.type,
+                              mode: option!.mode,
+                            } as Signer);
                           }}
                           className={classNames([
                             'btn flex-1 text-center disabled:pointer-events-auto disabled:cursor-not-allowed relative',
@@ -264,7 +285,7 @@ export const SignAction = ({ selectedAccount, initialTransaction, sendParentMess
                 </div>
               </>
             ) : null}
-            {!isSmartContractAccount && !mainBridgeError ? (
+            {!isSmartContractAccount ? (
               <>
                 <div className="text-lg pb-2">Pick a Signer:</div>
                 <div className="flex flex-row flex-grow gap-4">
@@ -297,7 +318,7 @@ export const SignAction = ({ selectedAccount, initialTransaction, sendParentMess
           </button>
           <button
             className="btn btn-accent"
-            disabled={!!mainBridgeError || isPending || !signer}
+            disabled={!!mainBridgeError || isPending || !signer || (signer.mode === 'EOA' && !transport)}
             onClick={() => {
               setError(undefined);
               signTransaction((hash) => {

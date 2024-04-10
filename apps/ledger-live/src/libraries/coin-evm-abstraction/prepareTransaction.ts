@@ -67,132 +67,130 @@ const craftAddSignerPayload = (signer: Signer) => {
   }
 };
 
-export const prepareTransaction: AccountBridge<EvmAbstractionTransaction>['prepareTransaction'] = async (
-  account,
-  transaction,
-) => {
-  const nonce = await nodeApi.getNonce(account.freshAddress);
-  const tokenAccount = transaction.subAccountId
-    ? account.subAccounts?.find(
-        (subAccount): subAccount is TokenAccount =>
-          subAccount.type === 'TokenAccount' && subAccount.id === transaction.subAccountId,
-      )
-    : null;
-  const feeData = await nodeApi.getFeeData();
-  const { username, domain } = transaction.signer || {};
-  const hasCode = await nodeApi.hasCode(account.freshAddress);
-  const shouldDeployAccount = !hasCode && username && domain;
-  // const [, username, domain] = new RegExp(/(.*)\.(.*\.[a-z]{2,})$/g).exec(account.seedIdentifier) || [];
-
-  const signedAddSignerPayload =
-    shouldDeployAccount && transaction.signer
-      ? await axios
-          .post<string>(
-            `${import.meta.env.VITE_NAMING_SERVICE}lock/sign`,
-            transaction.signer.mode === 'EOA'
-              ? {
-                  type: 'EOA',
-                  address: transaction.signer.address,
-                }
-              : {
-                  type: 'WEBAUTHN',
-                  credId: transaction.signer.credId,
-                  pubKey: transaction.signer.pubKey,
-                },
-            {
-              headers: {
-                Authorization: `Bearer ${transaction.signer!.token}`,
-              },
-            },
-          )
-          .then(({ data }) => data)
+export const prepareTransaction: (signer: Signer) => AccountBridge<EvmAbstractionTransaction>['prepareTransaction'] =
+  (signer) => async (account, transaction) => {
+    const nonce = await nodeApi.getNonce(account.freshAddress);
+    const tokenAccount = transaction.subAccountId
+      ? account.subAccounts?.find(
+          (subAccount): subAccount is TokenAccount =>
+            subAccount.type === 'TokenAccount' && subAccount.id === transaction.subAccountId,
+        )
       : null;
+    const feeData = await nodeApi.getFeeData();
+    const { username, domain } = signer || {};
+    const hasCode = await nodeApi.hasCode(account.freshAddress);
+    const shouldDeployAccount = !hasCode && username && domain;
 
-  const initCode =
-    shouldDeployAccount && signedAddSignerPayload
-      ? {
-          factory: import.meta.env.VITE_WALLETFACTORY_CONTRACT,
-          factoryData: Buffer.from(
-            factoryContract.interface
-              .encodeFunctionData('createAccount', [
-                username,
-                domain,
-                0,
-                Buffer.from(signedAddSignerPayload.slice(2), 'hex'),
-              ])
-              .slice(2),
-            'hex',
-          ),
-        }
+    const signedAddSignerPayload =
+      shouldDeployAccount && signer
+        ? await axios
+            .post<string>(
+              `${import.meta.env.VITE_NAMING_SERVICE}lock/sign`,
+              signer.mode === 'EOA'
+                ? {
+                    type: 'EOA',
+                    address: signer.address,
+                  }
+                : {
+                    type: 'WEBAUTHN',
+                    credId: signer.credId,
+                    pubKey: signer.pubKey,
+                  },
+              {
+                headers: {
+                  Authorization: `Bearer ${signer.token}`,
+                },
+              },
+            )
+            .then(({ data }) => data)
+        : null;
+
+    const initCode =
+      shouldDeployAccount && signedAddSignerPayload
+        ? {
+            factory: import.meta.env.VITE_WALLETFACTORY_CONTRACT,
+            factoryData: Buffer.from(
+              factoryContract.interface
+                .encodeFunctionData('createAccount', [
+                  username,
+                  domain,
+                  0,
+                  Buffer.from(signedAddSignerPayload.slice(2), 'hex'),
+                ])
+                .slice(2),
+              'hex',
+            ),
+          }
+        : {};
+
+    const callData = transaction.recipient.match(ethAddressRegEx)
+      ? Buffer.from(
+          accountInterface
+            .encodeFunctionData(
+              'execute',
+              tokenAccount
+                ? [
+                    tokenAccount.token.contractAddress,
+                    0,
+                    erc20Interface.encodeFunctionData('transfer', [
+                      transaction.recipient,
+                      transaction.useAllAmount ? tokenAccount.balance.toString() : transaction.amount.toString(),
+                    ]),
+                  ]
+                : [transaction.recipient, transaction.amount.toString(), transaction.callData || '0x'],
+            )
+            .slice(2),
+          'hex',
+        )
+      : transaction.callData;
+
+    const draftTransaction: EvmAbstractionTransaction = {
+      ...transaction,
+      ...initCode,
+      nonce,
+      callData,
+      maxPriorityFeePerGas: new BigNumber(feeData.maxPriorityFeePerGas!.toHexString()),
+      maxFeePerGas: new BigNumber(feeData.maxFeePerGas!.toHexString()),
+    };
+
+    const dryRunSignature = dryRunSignatureBySigner[signer?.type || ''] || Buffer.alloc(0);
+    console.log({ dryRunSignature: dryRunSignature.toString('hex') });
+    const draftUserOpForEstimation = transactionToUserOperation(
+      account,
+      draftTransaction,
+      `0x${dryRunSignature.toString('hex')}`,
+    );
+    const paymasterParams = shouldDeployAccount
+      ? await nodeApi.getPaymasterAndData(deepHexlify(draftUserOpForEstimation))
       : {};
 
-  const callData = transaction.recipient.match(ethAddressRegEx)
-    ? Buffer.from(
-        accountInterface
-          .encodeFunctionData(
-            'execute',
-            tokenAccount
-              ? [
-                  tokenAccount.token.contractAddress,
-                  0,
-                  erc20Interface.encodeFunctionData('transfer', [
-                    transaction.recipient,
-                    transaction.useAllAmount ? tokenAccount.balance.toString() : transaction.amount.toString(),
-                  ]),
-                ]
-              : [transaction.recipient, transaction.amount.toString(), transaction.callData || '0x'],
-          )
-          .slice(2),
-        'hex',
-      )
-    : transaction.callData;
+    const userOp = transactionToUserOperation(
+      account,
+      { ...paymasterParams, ...draftTransaction },
+      `0x${dryRunSignature.toString('hex')}`,
+    );
+    const { callGasLimit, preVerificationGas, verificationGasLimit } = await nodeApi
+      .getGasEstimation(userOp)
+      .catch((e) => {
+        console.log(e);
+        return {
+          callGasLimit: new BigNumber(0),
+          preVerificationGas: new BigNumber(0),
+          verificationGasLimit: new BigNumber(0),
+        };
+      });
 
-  const draftTransaction: EvmAbstractionTransaction = {
-    ...transaction,
-    ...initCode,
-    nonce,
-    callData,
-    maxPriorityFeePerGas: new BigNumber(feeData.maxPriorityFeePerGas!.toHexString()),
-    maxFeePerGas: new BigNumber(feeData.maxFeePerGas!.toHexString()),
-  };
-
-  const dryRunSignature = dryRunSignatureBySigner[draftTransaction.signer?.type || ''] || Buffer.alloc(0);
-  const draftUserOpForEstimation = transactionToUserOperation(
-    account,
-    draftTransaction,
-    `0x${dryRunSignature.toString('hex')}`,
-  );
-  const paymasterParams = shouldDeployAccount
-    ? await nodeApi.getPaymasterAndData(deepHexlify(draftUserOpForEstimation))
-    : {};
-
-  const userOp = transactionToUserOperation(
-    account,
-    { ...paymasterParams, ...draftTransaction },
-    `0x${dryRunSignature.toString('hex')}`,
-  );
-  const { callGasLimit, preVerificationGas, verificationGasLimit } = await nodeApi
-    .getGasEstimation(userOp)
-    .catch((e) => {
-      console.log(e);
-      return {
-        callGasLimit: new BigNumber(0),
-        preVerificationGas: new BigNumber(0),
-        verificationGasLimit: new BigNumber(0),
-      };
+    console.log({
+      callGasLimit: callGasLimit.toFixed(),
+      preVerificationGas: preVerificationGas.toFixed(),
+      verificationGasLimit: verificationGasLimit.toFixed(),
     });
 
-  console.log({
-    callGasLimit: callGasLimit.toFixed(),
-    preVerificationGas: preVerificationGas.toFixed(),
-    verificationGasLimit: verificationGasLimit.toFixed(),
-  });
-
-  return {
-    ...paymasterParams,
-    ...draftTransaction,
-    callGasLimit,
-    preVerificationGas,
-    verificationGasLimit,
+    return {
+      ...paymasterParams,
+      ...draftTransaction,
+      callGasLimit,
+      preVerificationGas,
+      verificationGasLimit,
+    };
   };
-};

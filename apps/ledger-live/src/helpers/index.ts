@@ -1,7 +1,7 @@
 import classNames from 'classnames';
 import { twMerge } from 'tailwind-merge';
 import Transport from '@ledgerhq/hw-transport';
-import TransportWebUSB from '@ledgerhq/hw-transport-webusb';
+import TransportWebHID from '@ledgerhq/hw-transport-webhid';
 import TransportWebBLE from '@ledgerhq/hw-transport-web-ble';
 import { Signer } from '../types';
 
@@ -12,15 +12,25 @@ export const openNanoApp = async (
   type: 'ledger-usb' | 'ledger-ble',
 ): Promise<[Transport | null, Error | null]> => {
   try {
-    const transport = await (type === 'ledger-usb'
-      ? TransportWebUSB.create().catch((eee) => {
-          console.log('usb', { eee });
-          throw eee;
-        })
-      : TransportWebBLE.create().catch((eee) => {
-          console.log('ble', { eee });
-          throw eee;
-        }));
+    const transport = await (async () => {
+      if (type === 'ledger-usb') {
+        const alreadyExisitingTransport = await TransportWebHID.openConnected();
+        if (alreadyExisitingTransport) return alreadyExisitingTransport;
+
+        return TransportWebHID.create().catch((error) => {
+          console.log('USB Error', { error });
+          throw error;
+        });
+      } else if (type === 'ledger-ble') {
+        return TransportWebBLE.create().catch((error) => {
+          console.log('BLE Error', { error });
+          throw error;
+        });
+      }
+
+      throw new Error('Invalid Transport');
+    })();
+
     console.log('Create new transport', { type, transport });
 
     // getAppAndVersion
@@ -43,7 +53,7 @@ export const openNanoApp = async (
       await transport.send(0xe0, 0xd8, 0x00, 0x00, Buffer.from(appName));
       console.log('Should be opened now');
 
-      await transport.close();
+      // await transport.close();
       console.log('closing the transport');
       await new Promise((resolve) => {
         setTimeout(() => resolve(undefined), 2500);

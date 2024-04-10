@@ -36,10 +36,11 @@ const AccountStep = ({ signer, currency }: Props) => {
     const obs = bridge
       .scanAccounts({ currency, deviceId: '', syncConfig: { paginationConfig: { operations: 10 } } })
       .subscribe({
-        next(res) {
-          console.log(res);
-          if (res.type === 'discovered') {
-            setAccounts(uniqBy([...accounts, res.account], ({ id }) => id));
+        async next(event) {
+          console.log(event);
+          if (event.type === 'discovered') {
+            setAccounts(uniqBy([...accounts, event.account], ({ id }) => id));
+            await signer.transport?.close();
           }
         },
         error(err) {

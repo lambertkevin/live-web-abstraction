@@ -21,15 +21,15 @@ export function buildCurrencyBridge(signer: Signer): CurrencyBridge {
   };
 }
 
-export function buildAccountBridge(): AccountBridge<EvmAbstractionTransaction> {
+export function buildAccountBridge(signer: Signer): AccountBridge<EvmAbstractionTransaction> {
   return {
     createTransaction,
     updateTransaction,
-    prepareTransaction,
+    prepareTransaction: prepareTransaction(signer),
     getTransactionStatus,
     sync,
     receive,
-    signOperation,
+    signOperation: signOperation(signer),
     broadcast,
     estimateMaxSpendable: async () => new BigNumber(0),
   };

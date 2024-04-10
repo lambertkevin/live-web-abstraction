@@ -1,5 +1,6 @@
 import uniqBy from 'lodash/uniqBy';
 import isEqual from 'lodash/isEqual';
+import type Transport from '@ledgerhq/hw-transport';
 import { memo, useCallback, useEffect, useState } from 'react';
 import type { CryptoCurrency } from '@ledgerhq/types-cryptoassets';
 import { buildCurrencyBridge } from '../../libraries/coin-evm-abstraction/bridge';
@@ -29,10 +30,10 @@ const AccountStep = ({ signer, currency }: Props) => {
 
     const bridge = buildCurrencyBridge(signer);
     const obs = bridge.scanAccounts({ currency, deviceId: '', syncConfig: { paginationConfig: {} } }).subscribe({
-      next(res) {
-        console.log(res);
-        if (res.type === 'discovered') {
-          const newAccounts = uniqBy([...accounts, res.account], ({ id }) => id);
+      next(event) {
+        console.log(event);
+        if (event.type === 'discovered') {
+          const newAccounts = uniqBy([...accounts, event.account], ({ id }) => id);
           if (!isEqual(newAccounts, accounts)) {
             setAccounts(newAccounts);
           }

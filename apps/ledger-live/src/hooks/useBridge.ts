@@ -20,7 +20,7 @@ export const useBridge = (
   useEffect(() => {
     if (!signer) return;
 
-    if (signer.type !== 'webauthn') {
+    if (signer.mode === 'EOA') {
       openNanoApp('Ethereum', signer.type).then(([trans, transErr]) => {
         if (trans) {
           setTransport(trans);
@@ -31,11 +31,17 @@ export const useBridge = (
       });
     }
   }, [account.currency.managerAppName, signer]);
-
   const bridge = useMemo(
     () =>
       account.seedIdentifier.includes('.ledger.com')
-        ? buildSmartAccountBridge()
+        ? buildSmartAccountBridge(
+            signer?.mode === 'EOA'
+              ? {
+                  ...signer,
+                  transport,
+                }
+              : signer || { type: 'webauthn', mode: 'Webauthn' },
+          )
         : buildAccountBridge(async (_, fn) => {
             if (signer?.mode === 'EOA' && transport) {
               const app = new Eth(transport);
@@ -89,9 +95,21 @@ export const useBridge = (
 
   useEffect(() => {
     if (_transaction) {
-      updateMethod(_transaction);
+      updateMethod(
+        _transaction.family === 'evm-abstraction'
+          ? {
+              ..._transaction,
+              signer: signer
+                ? ({
+                    ...signer,
+                    transport,
+                  } as Signer)
+                : undefined,
+            }
+          : _transaction,
+      );
     }
-  }, [_transaction]);
+  }, [_transaction, signer, transaction.family, updateMethod]);
 
   return {
     bridge,

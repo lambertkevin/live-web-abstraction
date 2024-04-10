@@ -37,8 +37,7 @@ const SendModal = ({ accountId }: Props) => {
   );
 
   const [signer, setSigner] = useState<Signer>();
-  console.log({ signer });
-  const { transaction, status, updateTransaction, isPending, bridge, transport, transportError } = useBridge(
+  const { transaction, status, updateTransaction, isPending, bridge, transport } = useBridge(
     mainAccount!,
     undefined,
     signer,
@@ -95,7 +94,14 @@ const SendModal = ({ accountId }: Props) => {
         />
       )}
       {step === 1 && (
-        <SignerStep account={mainAccount!} setSigner={setSigner} signer={signer} goNextStep={goNextStep} />
+        <SignerStep
+          account={mainAccount!}
+          setSigner={setSigner}
+          signer={signer}
+          transport={transport}
+          transaction={transaction}
+          goNextStep={goNextStep}
+        />
       )}
       {step === 2 && (
         <AmountStep
@@ -127,7 +133,6 @@ const SendModal = ({ accountId }: Props) => {
           signer={signer}
           setSigner={setSigner}
           transport={transport}
-          transportError={transportError}
         />
       )}
     </>
