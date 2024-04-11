@@ -6,6 +6,8 @@ services:
     user: "root"
     volumes:
       - ./bundler:/app
+      - ../contracts/lib/account-abstraction:/app/submodules/account-abstraction
+      - /dev/null:/app/submodules/account-abstraction/.git
     restart: always
     env_file:
       - .env
