@@ -1,5 +1,4 @@
-import debounce from 'lodash/debounce';
-import { useState, useEffect, memo, useMemo, useCallback } from 'react';
+import { useState, useEffect, memo, useCallback, useRef } from 'react';
 import { useMotionValue, useMotionTemplate, motion } from 'framer-motion';
 import { cn } from '../helpers';
 
@@ -9,21 +8,25 @@ const CoolPasskey = ({ text, className }: { text?: string; className?: string })
 
   const [randomString, setRandomString] = useState('');
   const [mouseOver, setMouseOver] = useState(false);
+  const mouseOverRef = useRef(mouseOver);
 
   const newString = useCallback(async () => {
     setRandomString(generateRandomString(1500));
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    newString();
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    if (mouseOverRef.current) {
+      newString();
+    }
   }, []);
 
   useEffect(() => {
+    mouseOverRef.current = mouseOver;
     if (mouseOver) {
       newString();
     }
   }, [mouseOver]);
 
   useEffect(() => {
-    newString();
+    setRandomString(generateRandomString(1500));
   }, []);
 
   function onMouseMove({ currentTarget, clientX, clientY }: any) {

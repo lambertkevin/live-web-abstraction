@@ -8,13 +8,13 @@ import type { CommonDeviceTransactionField } from '@ledgerhq/coin-framework/lib-
 import getDeviceEvmAbstractionTransactionConfig from '../../libraries/coin-evm-abstraction/deviceTransactionConfig';
 import type { EvmAbstractionTransaction } from '../../libraries/coin-evm-abstraction/types';
 import { AccountWithSigners, RawEthersTransaction, Signer } from '../../types';
+import { useAccountsStore, useCurrencyPriceStore } from '../../store';
 import { translateError } from '../../helpers/translations';
 import LedgerLogo from '../../components/icons/LedgerLogo';
+import CoolPasskey from '../../components/CoolPasskey';
 import { useBridge } from '../../hooks/useBridge';
 import { SignerOptions } from '../../helpers';
-import { useAccountsStore } from '../../store';
 import type { ACTIONS } from '.';
-import CoolPasskey from '../../components/CoolPasskey';
 
 type Props = {
   selectedAccount: AccountWithSigners | undefined;
@@ -26,6 +26,8 @@ type Props = {
 export const SignAction = ({ selectedAccount, initialTransaction, sendParentMessage, setActionName }: Props) => {
   if (!selectedAccount) throw Error('No account selected');
   if (!initialTransaction) throw Error('No transaction provided');
+
+  const { prices } = useCurrencyPriceStore();
 
   const { syncAccounts, updateAccount } = useAccountsStore();
   useEffect(() => {
@@ -211,7 +213,11 @@ export const SignAction = ({ selectedAccount, initialTransaction, sendParentMess
                   {field.type === 'fees' && (
                     <>
                       {status?.estimatedFees.dividedBy(10 ** selectedAccount.currency.units[0].magnitude).toFixed()}{' '}
-                      {selectedAccount.currency.units[0].code}
+                      {selectedAccount.currency.units[0].code} <br />$
+                      {status?.estimatedFees
+                        .dividedBy(10 ** selectedAccount.currency.units[0].magnitude)
+                        .times(prices[selectedAccount.unit.code.toLowerCase()] || 0)
+                        .toFixed(2)}
                     </>
                   )}
                 </div>
@@ -274,8 +280,8 @@ export const SignAction = ({ selectedAccount, initialTransaction, sendParentMess
                             } as Signer);
                           }}
                           className={classNames([
-                            'btn flex-1 text-center disabled:pointer-events-auto disabled:cursor-not-allowed relative',
-                            signer?.type === option!.type ? 'border-1 border-blue-600 border-opacity-40' : '',
+                            'btn flex-1 text-center disabled:pointer-events-auto disabled:cursor-not-allowed relative ring-2 ring-blue-500/10 ring-offset-2 ring-offset-transparent hover:ring-blue-500/25 border-1 border-transparent hover:border-transparent focus:outline-none outline-none transition-all',
+                            signer?.type === option!.type ? 'border-blue-600/40 ring-blue-500/25' : '',
                           ])}
                         >
                           <CoolPasskey text="Passkey" />
