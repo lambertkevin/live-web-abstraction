@@ -1,4 +1,4 @@
-apt-get update -y && apt-get install -y openssl
+apt-get update -y && apt-get install -y openssl curl
 
 if [ -f .keys/ns.pk ]; then
     echo 'Keys already set'

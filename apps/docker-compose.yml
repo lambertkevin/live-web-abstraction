@@ -9,11 +9,18 @@ services:
       - ../contracts/lib/account-abstraction:/app/submodules/account-abstraction
       - /dev/null:/app/submodules/account-abstraction/.git
     restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${BUNDLER_PORT}"]
+      interval: 5s
+      timeout: 1s
+      retries: 100
+      start_period: 3s
     env_file:
-      - .env
+      - ../.env
     working_dir: /app
     depends_on:
-      - anvil
+      forge-deployer:
+        condition: service_completed_successfully
     ports:
       - "${BUNDLER_PORT}:${BUNDLER_PORT}"
     cpus: 8
@@ -28,11 +35,18 @@ services:
     user: "root"
     volumes:
       - ./paymaster:/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${PAYMASTER_PORT}/health"]
+      interval: 5s
+      timeout: 1s
+      retries: 100
+      start_period: 3s
     restart: always
     depends_on:
-      - anvil
+      forge-deployer:
+        condition: service_completed_successfully
     env_file:
-      - .env
+      - ../.env
     working_dir: /app
     ports:
       - "${PAYMASTER_PORT}:${PAYMASTER_PORT}"
@@ -40,16 +54,23 @@ services:
   
   naming-service:
     image: "node:20-buster-slim"
-    user: "root"
     volumes:
       - ./naming-service:/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${NAMING_SERVICE_PORT}/health"]
+      interval: 5s
+      timeout: 1s
+      retries: 100
+      start_period: 3s
     restart: always
     env_file:
-      - .env
+      - ../.env
     working_dir: /app
     depends_on:
-      - naming-service-db
-      - anvil
+      naming-service-db:
+        condition: service_healthy
+      forge-deployer:
+        condition: service_completed_successfully
     ports:
       - "${NAMING_SERVICE_PORT}:${NAMING_SERVICE_PORT}"
       - 5555:5555
@@ -57,9 +78,14 @@ services:
 
   naming-service-db:
     image: postgres:16
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: always
     env_file:
-      - .env
+      - ../.env
     volumes:
       - ./naming-service-db/data:/var/lib/postgresql/data
 
@@ -68,22 +94,22 @@ services:
     user: "root"
     volumes:
       - ./ledger-live:/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${FRONTEND_PORT}"]
+      interval: 5s
+      timeout: 1s
+      retries: 100
+      start_period: 3s
     restart: always
     env_file:
-      - .env
+      - ../.env
     environment:
       - VITE_NETWORK=${RPC}
       - VITE_BUNDLER=${BUNDLER}
       - VITE_PAYMASTER=${PAYMASTER}
       - VITE_NAMING_SERVICE=${NAMING_SERVICE}
-      - VITE_ENTRYPOINT=${ENTRYPOINT_CONTRACT}
-      - VITE_WALLETFACTORY_CONTRACT=${FACTORY_CONTRACT}
       - VITE_MOCK_ANVIL_EXPLORER=${MOCK_ANVIL_EXPLORER}
     working_dir: /app
-    depends_on:
-      - anvil
-      - bundler
-      - naming-service
     ports:
       - "${FRONTEND_PORT}:${FRONTEND_PORT}"
     command: ./run.sh
@@ -93,13 +119,17 @@ services:
     user: "root"
     volumes:
       - ./dapp:/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${DAPP_PORT}"]
+      interval: 5s
+      timeout: 1s
+      retries: 100
+      start_period: 3s
     restart: always
     env_file:
-      - .env
+      - ../.env
     environment:
       - VITE_NETWORK=${RPC}
-    depends_on:
-      - anvil
     working_dir: /app
     ports:
       - "${DAPP_PORT}:${DAPP_PORT}"
@@ -112,7 +142,7 @@ services:
       - ./mock-anvil-explorer:/app
     restart: always
     env_file:
-      - .env
+      - ../.env
     working_dir: /app
     ports:
       - "${MOCK_ANVIL_EXPLORER_PORT}:${MOCK_ANVIL_EXPLORER_PORT}"
@@ -122,7 +152,7 @@ services:
     image: ghcr.io/foundry-rs/foundry:latest
     platform: linux/amd64
     env_file:
-      - .env
+      - ../.env
     ports:
       - "8545:8545"
     command: -c "anvil --steps-tracing --block-time 5 --host 0.0.0.0"
