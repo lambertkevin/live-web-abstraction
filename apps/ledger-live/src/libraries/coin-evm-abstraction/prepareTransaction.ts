@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { ethers } from 'ethers';
 import { BigNumber } from 'bignumber.js';
 import type { AccountBridge, TokenAccount } from '@ledgerhq/types-live';
 import { accountInterface, erc20Interface, factoryContract } from '../../contracts';
@@ -132,16 +131,21 @@ export const prepareTransaction: (signer?: Signer) => AccountBridge<EvmAbstracti
       { ...paymasterParams, ...draftTransaction },
       `0x${dryRunSignature.toString('hex')}`,
     );
-    const { callGasLimit, preVerificationGas, verificationGasLimit } = await nodeApi
-      .getGasEstimation(userOp)
-      .catch((e) => {
-        console.log(e);
-        return {
-          callGasLimit: new BigNumber(0),
-          preVerificationGas: new BigNumber(0),
-          verificationGasLimit: new BigNumber(0),
-        };
-      });
+
+    const getGasEstimation = async () => {
+      if (!hasCode && !initCode.factoryData)
+        throw new Error('Skipping gas estimation for deployment of undeployed account with no initCode');
+      return nodeApi.getGasEstimation(userOp);
+    };
+
+    const { callGasLimit, preVerificationGas, verificationGasLimit } = await getGasEstimation().catch((e) => {
+      console.log(e);
+      return {
+        callGasLimit: new BigNumber(0),
+        preVerificationGas: new BigNumber(0),
+        verificationGasLimit: new BigNumber(0),
+      };
+    });
 
     console.log({
       callGasLimit: callGasLimit.toFixed(),
