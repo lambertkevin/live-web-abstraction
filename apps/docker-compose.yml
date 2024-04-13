@@ -155,3 +155,14 @@ services:
     ports:
       - "8545:8545"
     command: -c "anvil --steps-tracing --block-time 5 --host 0.0.0.0"
+
+  forge-deployer:
+    image: ghcr.io/foundry-rs/foundry:latest
+    platform: linux/amd64
+    depends_on:
+      - anvil
+    volumes:
+      - ../contracts:/contracts
+    env_file:
+      - ../.env
+    command: -c "cd /contracts && forge script script/Deploy.s.sol --rpc-url http://anvil:8545 --broadcast --private-key ${DEPLOYER_SK}"
