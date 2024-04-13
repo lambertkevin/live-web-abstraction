@@ -221,7 +221,14 @@ const SignatureStep = ({ transaction, account, bridge, status, isPending, signer
                   </div>
                 </div>
               ))}
-              {signer.mode === 'EOA' ? <img src="/confirm-nano.png" className="py-10" /> : null}
+              {signer.mode === 'EOA' ? (
+                <img src="/confirm-nano.png" className="py-10" />
+              ) : (
+                <div className="flex flex-col items-center py-10">
+                  <img src="/touch-id.svg" width={40} className="mb-2 animate-[pulse_3s_ease-in-out_infinite]" />
+                  <span className="text-sm font-semibold">Confirm with your Passkey</span>
+                </div>
+              )}
             </div>
           </div>
         </div>

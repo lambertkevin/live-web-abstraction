@@ -39,7 +39,8 @@ export const ConnectAction = ({
           {accounts.map((account) => (
             <div
               key={account.id}
-              className="flex flex-row justify-between items-center w-full border border-zinc-700 py-4 px-3 rounded gap-3"
+              className="flex flex-row justify-between items-center w-full border border-zinc-700 py-4 px-3 rounded gap-3 cursor-pointer"
+              onClick={() => setSelectedAccountId(account.id)}
             >
               <input
                 type="checkbox"
