@@ -41,6 +41,7 @@ export const prepareTransaction: (signer?: Signer) => AccountBridge<EvmAbstracti
     const { username, domain } = signer || {};
     const hasCode = await nodeApi.hasCode(account.freshAddress);
     const shouldDeployAccount = !hasCode && username && domain;
+    const isRecipientMatchingEthFormat = transaction.recipient.match(ethAddressRegEx);
 
     const signedAddSignerPayload =
       shouldDeployAccount && signer
@@ -133,7 +134,7 @@ export const prepareTransaction: (signer?: Signer) => AccountBridge<EvmAbstracti
     );
 
     const getGasEstimation = async () => {
-      if (!hasCode && !initCode.factoryData)
+      if ((!hasCode && !initCode.factoryData) || !isRecipientMatchingEthFormat)
         throw new Error('Skipping gas estimation for deployment of undeployed account with no initCode');
       return nodeApi.getGasEstimation(userOp);
     };

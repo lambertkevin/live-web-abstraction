@@ -1,13 +1,16 @@
+import classNames from 'classnames';
 import type { TokenAccount } from '@ledgerhq/types-live';
 import React, { memo, useCallback, useEffect, useState } from 'react';
 import type { Transaction as EvmTransaction, TransactionStatus } from '@ledgerhq/coin-evm/lib/types/transaction';
+import { ethAddressRegEx } from '../../libraries/coin-evm-abstraction/getTransactionStatus';
+import { EvmAbstractionTransaction } from '../../libraries/coin-evm-abstraction/types';
 import CurrencyIcon from '../../components/icons/CurrencyIcon';
 import ArrowDown from '../../components/icons/ArrowDown';
 import type { AccountWithSigners } from '../../types';
 import Select from '../../components/Select';
+import { factoryContract } from '../../contracts';
+import { provider } from '../../providers';
 import { theme } from '../../config';
-import classNames from 'classnames';
-import { EvmAbstractionTransaction } from '../../libraries/coin-evm-abstraction/types';
 
 type Props = {
   accounts: AccountWithSigners[];
@@ -49,12 +52,42 @@ const RecipientStep = ({
   );
 
   const [recipient, setRecipient] = useState('');
+  const [recipientDomain, setRecipientDomain] = useState('');
+
   useEffect(() => {
-    if (!selectedAccount) return;
-    updateTransaction({
-      recipient,
-      subAccountId: selectedAccount.type === 'TokenAccount' ? selectedAccount.id : undefined,
-      chainId: mainAccount.currency.ethereumLikeInfo?.chainId,
+    if (!selectedAccount || !recipient) return;
+
+    const domainRegex = /(.*)\.(.*\..{2,})/g;
+    const [, username, domain] = domainRegex.exec(recipient) || [];
+    if (!username?.length || !domain?.length) {
+      setRecipientDomain('');
+      updateTransaction({
+        recipient,
+        subAccountId: selectedAccount.type === 'TokenAccount' ? selectedAccount.id : undefined,
+        chainId: mainAccount.currency.ethereumLikeInfo?.chainId,
+      });
+
+      return;
+    }
+
+    factoryContract.getAddress(username, domain, 0).then((address: string) => {
+      provider.getCode(address).then((code) => {
+        if (code !== '0x') {
+          setRecipientDomain(recipient);
+          updateTransaction({
+            recipient: address,
+            subAccountId: selectedAccount.type === 'TokenAccount' ? selectedAccount.id : undefined,
+            chainId: mainAccount.currency.ethereumLikeInfo?.chainId,
+          });
+        } else {
+          setRecipientDomain('');
+          updateTransaction({
+            recipient,
+            subAccountId: selectedAccount.type === 'TokenAccount' ? selectedAccount.id : undefined,
+            chainId: mainAccount.currency.ethereumLikeInfo?.chainId,
+          });
+        }
+      });
     });
   }, [mainAccount.currency.ethereumLikeInfo?.chainId, recipient, selectedAccount, updateTransaction]);
 
@@ -136,6 +169,16 @@ const RecipientStep = ({
           }}
           disabled={!selectedAccount}
         />
+
+        {recipientDomain &&
+          !isPending &&
+          transaction.recipient !== recipientDomain &&
+          transaction.recipient.match(ethAddressRegEx) && (
+            <div className="flex flex-col my-4 p-3 text-center alert alert-info rounded-sm gap-0">
+              <span>Domain resolution: </span>
+              <span className="font-semibold">{transaction.recipient}</span>
+            </div>
+          )}
         {transaction?.recipient.length > 0 && !isPending && errors?.recipient && (
           <div className="label">
             <span className="label-text-alt text-error pl-2">{errors.recipient.message}</span>

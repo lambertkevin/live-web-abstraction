@@ -24,7 +24,7 @@ type ValidatedTransactionFields =
 type ValidationIssues = Partial<Record<ValidatedTransactionFields, Error>>;
 
 // This regex will not work with Starknet since addresses are 65 caracters long after the 0x
-const ethAddressRegEx = /^(0x)?[0-9a-fA-F]{40}$/;
+export const ethAddressRegEx = /^(0x)?[0-9a-fA-F]{40}$/;
 
 export const validateRecipient = (
   account: AccountWithSigners,
