@@ -4,9 +4,12 @@ import isEqual from 'lodash/isEqual';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import nftAbi from '../abis/nft.abi.json';
 import { toRawEthersTransaction } from '../helpers';
+// @ts-expect-error accessible via docker volume
+// eslint-disable-next-line import/no-unresolved
+import addresses from '../../contracts-config/addresses.json';
 
 const provider = new ethers.providers.StaticJsonRpcProvider(import.meta.env.RPC);
-const nftContract = new ethers.Contract('0x5FC8d32690cc91D4c39d9d3abcBD16989F875707', nftAbi, provider);
+const nftContract = new ethers.Contract(addresses.NFT_CONTRACT, nftAbi, provider);
 
 export const IndexView = () => {
   const iframe = useRef<HTMLIFrameElement | null>(null);

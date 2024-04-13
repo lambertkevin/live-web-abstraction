@@ -8,6 +8,7 @@ services:
       - ./bundler:/app
       - ../contracts/lib/account-abstraction:/app/submodules/account-abstraction
       - /dev/null:/app/submodules/account-abstraction/.git
+      - ../contracts/config:/app/packages/bundler/contracts-config
     restart: always
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:${BUNDLER_PORT}"]
@@ -35,6 +36,7 @@ services:
     user: "root"
     volumes:
       - ./paymaster:/app
+      - ../contracts/config:/app/contracts-config
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:${PAYMASTER_PORT}/health"]
       interval: 5s
@@ -94,6 +96,7 @@ services:
     user: "root"
     volumes:
       - ./ledger-live:/app
+      - ../contracts/config:/app/contracts-config
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:${FRONTEND_PORT}"]
       interval: 5s
@@ -119,6 +122,7 @@ services:
     user: "root"
     volumes:
       - ./dapp:/app
+      - ../contracts/config:/app/contracts-config
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:${DAPP_PORT}"]
       interval: 5s

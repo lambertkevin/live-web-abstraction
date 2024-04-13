@@ -15,8 +15,11 @@ import { HttpRpcClient, SimpleAccountAPI } from '@account-abstraction/sdk'
 import { runBundler } from '../runBundler'
 import { BundlerServer } from '../BundlerServer'
 import { getNetworkProvider } from '../Config'
+// @ts-expect-error accessible via docker volume
+// eslint-disable-next-line import/no-unresolved
+import addresses from "../../contracts-config/addresses";
 
-const ENTRY_POINT = '0x0000000071727De22E5E9d8BAf0edAc6f37da032'
+const ENTRY_POINT = addresses.ENTRYPOINT_CONTRACT;
 
 class Runner {
   bundlerProvider!: HttpRpcClient

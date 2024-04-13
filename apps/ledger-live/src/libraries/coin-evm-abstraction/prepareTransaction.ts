@@ -5,19 +5,16 @@ import type { AccountBridge, TokenAccount } from '@ledgerhq/types-live';
 import { accountInterface, erc20Interface, factoryContract } from '../../contracts';
 import { transactionToUserOperation } from './adapters/userOperation';
 import type { EvmAbstractionTransaction } from './types';
+import { deepHexlify } from '../../helpers';
 import { Signer } from '../../types';
 import nodeApi from './api/nodeApi';
-import {
-  SignatureCurveType,
-  SignatureDryRun,
-  SignatureMessageType,
-  deepHexlify,
-  getSignatureType,
-} from '../../helpers';
+// @ts-expect-error accessible via docker volume
+// eslint-disable-next-line import/no-unresolved
+import addresses from '../../../contracts-config/addresses.json';
 
 const ethAddressRegEx = /^(0x)?[0-9a-fA-F]{40}$/;
 
-const dryRunSignatureBySigner: Record<EvmAbstractionTransaction['signer']['type'], Buffer> = {
+const dryRunSignatureBySigner: Record<Signer['type'], Buffer> = {
   'ledger-usb': Buffer.from(
     '89745fdb8f84e30b5e984103bf95520045ae48baf5531f882f81c238af048d0380118d7deef4ad33fa624ff273d0f5954cc20649cc819e58b75905b479cab9600d1c',
     'hex',
@@ -32,42 +29,7 @@ const dryRunSignatureBySigner: Record<EvmAbstractionTransaction['signer']['type'
   ),
 };
 
-const craftAddSignerPayload = (signer: Signer) => {
-  if (signer.type === 'webauthn') {
-    if (!signer.credIdHash || !signer.pubKey || !signer.pubKey[0] || !signer.pubKey[1])
-      throw new Error("Couldn't create initCode for Webauthn");
-
-    const firstByte = getSignatureType(
-      SignatureDryRun.OFF,
-      SignatureMessageType.WEBAUTHN,
-      SignatureCurveType.P256_R1_VERIFY,
-    );
-
-    return Buffer.concat([
-      Buffer.from(firstByte.toString(16).padStart(2, '0'), 'hex'),
-      Buffer.from(
-        ethers.utils.defaultAbiCoder
-          .encode(['bytes32', 'uint256', 'uint256'], [signer.credIdHash, signer.pubKey[0], signer.pubKey[1]])
-          .slice(2),
-        'hex',
-      ),
-    ]);
-  } else {
-    if (!signer.address) throw new Error("Couldn't create initCode for EOA");
-    const firstByte = getSignatureType(
-      SignatureDryRun.OFF,
-      SignatureMessageType.EIP191,
-      SignatureCurveType.P256_K1_ECRECOVER,
-    );
-
-    return Buffer.concat([
-      Buffer.from(firstByte.toString(16).padStart(2, '0'), 'hex'),
-      Buffer.from(signer.address.slice(2), 'hex'),
-    ]);
-  }
-};
-
-export const prepareTransaction: (signer: Signer) => AccountBridge<EvmAbstractionTransaction>['prepareTransaction'] =
+export const prepareTransaction: (signer?: Signer) => AccountBridge<EvmAbstractionTransaction>['prepareTransaction'] =
   (signer) => async (account, transaction) => {
     const nonce = await nodeApi.getNonce(account.freshAddress);
     const tokenAccount = transaction.subAccountId
@@ -108,7 +70,7 @@ export const prepareTransaction: (signer: Signer) => AccountBridge<EvmAbstractio
     const initCode =
       shouldDeployAccount && signedAddSignerPayload
         ? {
-            factory: import.meta.env.VITE_WALLETFACTORY_CONTRACT,
+            factory: addresses.FACTORY_CONTRACT,
             factoryData: Buffer.from(
               factoryContract.interface
                 .encodeFunctionData('createAccount', [
@@ -153,7 +115,8 @@ export const prepareTransaction: (signer: Signer) => AccountBridge<EvmAbstractio
       maxFeePerGas: new BigNumber(feeData.maxFeePerGas!.toHexString()),
     };
 
-    const dryRunSignature = dryRunSignatureBySigner[signer?.type || ''] || Buffer.alloc(0);
+    const dryRunSignature =
+      dryRunSignatureBySigner[(signer?.type || '') as keyof typeof dryRunSignatureBySigner] || Buffer.alloc(0);
     console.log({ dryRunSignature: dryRunSignature.toString('hex') });
     const draftUserOpForEstimation = transactionToUserOperation(
       account,

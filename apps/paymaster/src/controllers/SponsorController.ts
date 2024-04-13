@@ -2,6 +2,10 @@ import { ethers } from 'ethers';
 import type { UserOperation } from '../types';
 import { provider, signer } from '../config';
 import { packUserOp } from '../helpers';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore accessible via docker volume
+// eslint-disable-next-line import/no-unresolved
+import addresses from '../../contracts-config/addresses.json';
 
 export const sponsorUserOperation = async (userOp: UserOperation) => {
   const packedUserOp = packUserOp(userOp);
@@ -37,7 +41,7 @@ export const sponsorUserOperation = async (userOp: UserOperation) => {
   );
 
   return {
-    paymaster: process.env.PAYMASTER_CONTRACT,
+    paymaster: addresses.PAYMASTER_CONTRACT,
     paymasterData: ethers.utils.defaultAbiCoder.encode(
       ['bytes32', 'uint48', 'uint48', 'uint256', 'bytes'],
       [gasLessPackedUserOpHash, validFrom, validUntil, chainId, signature],

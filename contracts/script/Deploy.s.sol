@@ -5,6 +5,7 @@ import { Test } from "forge-std/Test.sol";
 import { console2 } from "forge-std/console2.sol";
 import { EntryPointSimulations } from "@account-abstraction/core/EntryPointSimulations.sol";
 import { PackedUserOperation } from "@account-abstraction/interfaces/PackedUserOperation.sol";
+import { Strings } from "@openzeppelin/utils/Strings.sol";
 
 import { BroadcasterScript } from "./Broadcaster.s.sol";
 import { Paymaster } from "../src/Paymaster/Paymaster.sol";
@@ -14,10 +15,12 @@ import { WebauthnVerifier256r1 } from "../src/Webauthn/WebauthnVerifier256r1.sol
 
 contract DeployAnvil is BroadcasterScript, Test {
   function run() external broadcast returns (address[5] memory) {
-    EntryPointSimulations entryPoint = new EntryPointSimulations();
+    EntryPointSimulations entryPoint = newEntryPointSimulations();
     console2.log("entrypoint", address(entryPoint));
 
-    address namingServiceAddr = 0x14dC79964da2C08b23698B3D3cc7Ca32193d9955;
+    address namingServiceAddr = vm
+      .createWallet(vm.envUint(("NAMING_SERVICE_SK")))
+      .addr;
     address webAuthnAddr = address(new WebauthnVerifier256r1());
     console2.log("webAuthn", webAuthnAddr);
 
@@ -28,17 +31,34 @@ contract DeployAnvil is BroadcasterScript, Test {
 
     Paymaster paymaster = new Paymaster(
       entryPoint,
-      0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f
+      vm.createWallet(vm.envUint(("PAYMASTER_SK"))).addr
     );
     console2.log("paymaster", address(paymaster));
     paymaster.deposit{ value: 10 ether }();
     console2.log("paymaster deposit", paymaster.getDeposit());
 
     QuiVeutEtreMonNFT queVeutEtreMonNFT = new QuiVeutEtreMonNFT(
-      0x976EA74026E726554dB657fA54763abd0C3a0aa9
+      vm.createWallet(vm.envUint(("NFT_OWNER_SK"))).addr
     );
     payable(address(queVeutEtreMonNFT)).transfer(10 ether);
     console2.log("balance", address(queVeutEtreMonNFT).balance);
+
+    string memory jsonObj = string(
+      abi.encodePacked(
+        '{ "ENTRYPOINT_CONTRACT": "',
+        Strings.toHexString(address(entryPoint)),
+        '", "FACTORY_CONTRACT": "',
+        Strings.toHexString(factory),
+        '", "PAYMASTER_CONTRACT": "',
+        Strings.toHexString(address(paymaster)),
+        '", "WEBAUTHN_CONTRACT": "',
+        Strings.toHexString(address(webAuthnAddr)),
+        '", "NFT_CONTRACT": "',
+        Strings.toHexString(address(queVeutEtreMonNFT)),
+        '" }'
+      )
+    );
+    vm.writeJson(jsonObj, "./config/addresses.json");
 
     return [
       address(entryPoint),

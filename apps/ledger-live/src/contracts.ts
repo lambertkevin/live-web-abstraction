@@ -4,8 +4,11 @@ import accountAbi from './abis/Account.abi.json';
 import erc20Abi from './abis/ERC20.abi.json';
 import entrypointAbi from './abis/Entrypoint.abi.json';
 import { provider } from './providers';
+// @ts-expect-error accessible via docker volume
+// eslint-disable-next-line import/no-unresolved
+import addresses from '../contracts-config/addresses.json';
 
-export const factoryContract = new ethers.Contract(import.meta.env.VITE_WALLETFACTORY_CONTRACT, factoryAbi, provider);
-export const entrypointContract = new ethers.Contract(import.meta.env.VITE_ENTRYPOINT, entrypointAbi, provider);
+export const factoryContract = new ethers.Contract(addresses.FACTORY_CONTRACT, factoryAbi, provider);
+export const entrypointContract = new ethers.Contract(addresses.ENTRYPOINT_CONTRACT, entrypointAbi, provider);
 export const accountInterface = new ethers.utils.Interface(accountAbi);
 export const erc20Interface = new ethers.utils.Interface(erc20Abi);

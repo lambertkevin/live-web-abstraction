@@ -1,5 +1,8 @@
 // TODO: consider adopting config-loading approach from hardhat to allow code in config file
 import ow from 'ow'
+// @ts-expect-error accessible via docker volume
+// eslint-disable-next-line import/no-unresolved
+import addresses from "../contracts-config/addresses";
 
 const MIN_UNSTAKE_DELAY = 86400
 const MIN_STAKE_VALUE = 1e18.toString()
@@ -50,7 +53,7 @@ export const BundlerConfigShape = {
 // TODO: implement merging config (args -> config.js -> default) and runtime shape validation
 export const bundlerConfigDefault: Partial<BundlerConfig> = {
   port: '3000',
-  entryPoint: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
+  entryPoint: addresses.ENTRYPOINT_CONTRACT,
   unsafe: false,
   conditionalRpc: false,
   minStake: MIN_STAKE_VALUE,

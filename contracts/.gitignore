@@ -12,3 +12,7 @@ docs/
 
 # Dotenv file
 .env
+
+# Config
+config/*
+!config/.gitkeep

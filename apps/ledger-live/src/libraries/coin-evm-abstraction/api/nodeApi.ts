@@ -4,6 +4,9 @@ import { deepHexlify, packUserOp } from '../../../helpers';
 import { entrypointContract } from '../../../contracts';
 import { bundler, provider } from '../../../providers';
 import type { UserOperation } from '../../../types';
+// @ts-expect-error accessible via docker volume
+// eslint-disable-next-line import/no-unresolved
+import addresses from '../../../../contracts-config/addresses.json';
 
 export const getGasEstimation = async (
   userOp: UserOperation,
@@ -20,7 +23,7 @@ export const getGasEstimation = async (
     'eth_estimateUserOperationGas',
     [
       deepHexlify({ ...userOp, callGasLimit: 10e5, preVerificationGas: 10e5, verificationGasLimit: 10e5 }),
-      import.meta.env.VITE_ENTRYPOINT,
+      addresses.ENTRYPOINT_CONTRACT,
     ],
   );
   return {
