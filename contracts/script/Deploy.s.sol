@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import { Test } from "forge-std/Test.sol";
 import { console2 } from "forge-std/console2.sol";
-import { EntryPointSimulations } from "@account-abstraction/core/EntryPointSimulations.sol";
+import { EntryPoint } from "@account-abstraction/core/EntryPoint.sol";
 import { PackedUserOperation } from "@account-abstraction/interfaces/PackedUserOperation.sol";
 import { Strings } from "@openzeppelin/utils/Strings.sol";
 
@@ -15,7 +15,7 @@ import { WebauthnVerifier256r1 } from "../src/Webauthn/WebauthnVerifier256r1.sol
 
 contract DeployAnvil is BroadcasterScript, Test {
   function run() external broadcast returns (address[5] memory) {
-    EntryPointSimulations entryPoint = newEntryPointSimulations();
+    EntryPoint entryPoint = new EntryPoint();
     console2.log("entrypoint", address(entryPoint));
 
     address namingServiceAddr = vm

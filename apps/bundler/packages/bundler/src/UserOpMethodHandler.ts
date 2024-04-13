@@ -146,33 +146,24 @@ export class UserOpMethodHandler {
 
     let callGasLimit: number;
     if (userOp.factoryData) {
-      console.time("AXIOS GAS LIMIT");
-      const { data: stream } = await axios.post(
+      console.time("SIMULATE HANDLE OPS GAS LIMIT");
+      callGasLimit = await axios.post<{ jsonrpc: string, id: number, result: `0x${string}` }>(
         // @ts-ignore
         this.provider.connection.url,
         {
-          method: "debug_traceCall",
-          params: simulationRpcParams('simulateHandleOp', this.entryPoint.address, userOp, [AddressZero, '0x'], {"disableStack": true, "disableStorage": true, "enableReturnData": false }),
+          method: "eth_estimateGas",
+          params: simulationRpcParams('simulateHandleOp', this.entryPoint.address, userOp, [AddressZero, '0x']),
           id: 1,
           jsonrpc: "2.0"
-        },
-        {
-          responseType: "stream",
         }
-      );
-      const textDecoder = new TextDecoder();
-      callGasLimit = await new Promise((resolve) => {
-        const ChunkReader = (chunk: any) => {
-          const decodedData = textDecoder.decode(chunk);
-          const regexp = new RegExp('"gas":"?([0-9x]*)"?,');
-          resolve(BigNumber.from(regexp.exec(decodedData)?.[1] ||
-          `0x${(21_000).toString(16)}`).toNumber());
-          stream.off("data", ChunkReader);
-        };
-
-        stream.on("data", ChunkReader);
+      )
+      .then(({ data }) => BigNumber.from(data.result).toNumber())
+      .catch((err) => {
+        const message =
+          err.message.match(/reason="(.*?)"/)?.at(1) ?? "execution reverted";
+          throw new RpcError(message, ValidationErrors.UserOperationReverted)
       });
-      console.timeEnd("AXIOS GAS LIMIT");
+      console.timeEnd("SIMULATE HANDLE OPS GAS LIMIT");
     } else {
       callGasLimit = await this.provider
         .estimateGas({
