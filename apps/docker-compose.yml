@@ -134,6 +134,27 @@ services:
       - "${DAPP_PORT}:${DAPP_PORT}"
     command: ./run.sh
 
+  uniswap:
+    image: "node:20-buster-slim"
+    user: "root"
+    volumes:
+      - ./uniswap:/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${UNISWAP_PORT}"]
+      interval: 5s
+      timeout: 1s
+      retries: 100
+      start_period: 3s
+    restart: always
+    env_file:
+      - ../.env
+    environment:
+      - VITE_NETWORK=${RPC}
+    working_dir: /app
+    ports:
+      - "${UNISWAP_PORT}:${UNISWAP_PORT}"
+    command: ./run.sh
+
   mock-anvil-explorer:
     image: "node:20-buster-slim"
     user: "root"

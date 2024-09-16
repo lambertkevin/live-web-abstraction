@@ -42,7 +42,11 @@ export const ConnectView = () => {
   useEffect(() => {
     const listener = async (event: MessageEvent) => {
       setOrigin(event.origin);
-      const { data: content }: { data: { type: string; data?: Record<string, unknown> } } = event;
+      const {
+        data: content,
+      }: { data: { type: string; data?: Record<string, unknown>; target?: string; source?: string } } = event;
+      if (content.target || content.source) return;
+
       switch (content.type) {
         case 'connect':
           if (!accounts.length) {
