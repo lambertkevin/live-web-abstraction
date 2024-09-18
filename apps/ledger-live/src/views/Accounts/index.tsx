@@ -22,11 +22,8 @@ const Accounts = () => {
         <h1 className="text-2xl">Accounts</h1>
         {accounts.length ? (
           <div className="flex flew-row gap-2">
-            <button className="btn btn-primary text-sm min-h-0 h-auto" onClick={() => openModal('AddAccount', {})}>
-              <Plus /> Add account
-            </button>
-            <CoolButton className="flex text-sm flex-row gap-3" onClick={() => openModal('AddSmartAccount', {})}>
-              <Plus /> <span className="text-nowrap">Add Smart Account</span>
+            <CoolButton className="flex text-sm flex-row gap-3" onClick={() => openModal('AddAccount', {})}>
+              <Plus /> <span className="text-nowrap">Add Account</span>
             </CoolButton>
           </div>
         ) : null}
@@ -40,11 +37,8 @@ const Accounts = () => {
       ) : (
         <div className="flex flex-col flex-grow items-center justify-center">
           <div className="flex flex-row gap-4">
-            <button className="btn btn-primary text-lg p-4" onClick={() => openModal('AddAccount', {})}>
-              <Plus /> Add account
-            </button>
-            <CoolButton className="text-lg p-4 flex flex-row gap-3" onClick={() => openModal('AddSmartAccount', {})}>
-              <Plus /> <span className="text-nowrap">Add Smart Account</span>
+            <CoolButton className="text-lg p-4 flex flex-row gap-3" onClick={() => openModal('AddAccount', {})}>
+              <Plus /> <span className="text-nowrap">Add Account</span>
             </CoolButton>
           </div>
         </div>
