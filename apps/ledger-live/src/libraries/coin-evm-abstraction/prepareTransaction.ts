@@ -1,15 +1,14 @@
+import type { AccountBridge, TokenAccount } from '@ledgerhq/types-live';
 import axios from 'axios';
 import { BigNumber } from 'bignumber.js';
-import type { AccountBridge, TokenAccount } from '@ledgerhq/types-live';
-import { accountInterface, erc20Interface, factoryContract } from '../../contracts';
-import { transactionToUserOperation } from './adapters/userOperation';
-import type { EvmAbstractionTransaction } from './types';
+import { accountInterface, erc20Interface } from '../../contracts';
 import { deepHexlify } from '../../helpers';
 import { Signer } from '../../types';
+import { transactionToUserOperation } from './adapters/userOperation';
 import nodeApi from './api/nodeApi';
-// @ts-expect-error accessible via docker volume
+import type { EvmAbstractionTransaction } from './types';
 // eslint-disable-next-line import/no-unresolved
-import addresses from '../../../contracts-config/addresses.json';
+// import addresses from '../../../contracts-config/addresses.json';
 
 const ethAddressRegEx = /^(0x)?[0-9a-fA-F]{40}$/;
 
@@ -67,23 +66,23 @@ export const prepareTransaction: (signer?: Signer) => AccountBridge<EvmAbstracti
             .then(({ data }) => data)
         : null;
 
-    const initCode =
-      shouldDeployAccount && signedAddSignerPayload
-        ? {
-            factory: addresses.FACTORY_CONTRACT,
-            factoryData: Buffer.from(
-              factoryContract.interface
-                .encodeFunctionData('createAccount', [
-                  username,
-                  domain,
-                  0,
-                  Buffer.from(signedAddSignerPayload.slice(2), 'hex'),
-                ])
-                .slice(2),
-              'hex',
-            ),
-          }
-        : {};
+    // const initCode =
+    //   shouldDeployAccount && signedAddSignerPayload
+    //     ? {
+    //         factory: addresses.FACTORY_CONTRACT,
+    //         factoryData: Buffer.from(
+    //           factoryContract.interface
+    //             .encodeFunctionData('createAccount', [
+    //               username,
+    //               domain,
+    //               0,
+    //               Buffer.from(signedAddSignerPayload.slice(2), 'hex'),
+    //             ])
+    //             .slice(2),
+    //           'hex',
+    //         ),
+    //       }
+    //     : {};
 
     const callData = transaction.recipient.match(ethAddressRegEx)
       ? Buffer.from(
@@ -108,7 +107,7 @@ export const prepareTransaction: (signer?: Signer) => AccountBridge<EvmAbstracti
 
     const draftTransaction: EvmAbstractionTransaction = {
       ...transaction,
-      ...initCode,
+      // ...initCode,
       nonce,
       callData,
       maxPriorityFeePerGas: new BigNumber(feeData.maxPriorityFeePerGas!.toHexString()),
@@ -134,7 +133,7 @@ export const prepareTransaction: (signer?: Signer) => AccountBridge<EvmAbstracti
     );
 
     const getGasEstimation = async () => {
-      if ((!hasCode && !initCode.factoryData) || !isRecipientMatchingEthFormat)
+      if (!hasCode /* && !initCode.factoryData)*/ || !isRecipientMatchingEthFormat)
         throw new Error('Skipping gas estimation for deployment of undeployed account with no initCode');
       return nodeApi.getGasEstimation(userOp);
     };

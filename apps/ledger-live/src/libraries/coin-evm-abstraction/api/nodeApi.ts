@@ -1,12 +1,11 @@
 import axios from 'axios';
 import { BigNumber } from 'bignumber.js';
-import { deepHexlify, packUserOp } from '../../../helpers';
-import { entrypointContract } from '../../../contracts';
+// import { entrypointContract } from '../../../contracts';
+import { deepHexlify } from '../../../helpers';
 import { bundler, provider } from '../../../providers';
 import type { UserOperation } from '../../../types';
-// @ts-expect-error accessible via docker volume
 // eslint-disable-next-line import/no-unresolved
-import addresses from '../../../../contracts-config/addresses.json';
+// import addresses from '../../../../contracts-config/addresses.json';
 
 export const getGasEstimation = async (
   userOp: UserOperation,
@@ -23,7 +22,7 @@ export const getGasEstimation = async (
     'eth_estimateUserOperationGas',
     [
       deepHexlify({ ...userOp, callGasLimit: 10e5, preVerificationGas: 10e5, verificationGasLimit: 10e5 }),
-      addresses.ENTRYPOINT_CONTRACT,
+      // addresses.ENTRYPOINT_CONTRACT,
     ],
   );
   return {
@@ -38,10 +37,11 @@ export const hasCode = async (address: string): Promise<boolean> => {
   return code !== '0x';
 };
 
-export const getUserOpHash = async (userOp: UserOperation): Promise<string> =>
-  entrypointContract.getUserOpHash(packUserOp(userOp));
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const getUserOpHash = async (_: UserOperation): Promise<string> => Promise.resolve('');
 
-export const getNonce = async (address: string): Promise<number> => entrypointContract.getNonce(address, 0);
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const getNonce = async (_: string): Promise<number> => 0;
 
 export const getFeeData = async () => provider.getFeeData();
 

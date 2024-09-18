@@ -1,12 +1,13 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
 import { NodeGlobalsPolyfillPlugin } from '@esbuild-plugins/node-globals-polyfill';
 import inject from '@rollup/plugin-inject';
+import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite';
+import { nodePolyfills } from 'vite-plugin-node-polyfills';
 import svgr from 'vite-plugin-svgr';
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react(), svgr()],
+  plugins: [nodePolyfills(), react(), svgr()],
   server: {
     host: true,
     port: Number(process.env.FRONTEND_PORT) || 1234,

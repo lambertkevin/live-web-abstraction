@@ -1,15 +1,15 @@
-import classNames from 'classnames';
-import type { TokenAccount } from '@ledgerhq/types-live';
-import React, { memo, useCallback, useEffect, useState } from 'react';
 import type { Transaction as EvmTransaction, TransactionStatus } from '@ledgerhq/coin-evm/lib/types/transaction';
+import type { TokenAccount } from '@ledgerhq/types-live';
+import classNames from 'classnames';
+import React, { memo, useCallback, useEffect, useState } from 'react';
+import ArrowDown from '../../components/icons/ArrowDown';
+import CurrencyIcon from '../../components/icons/CurrencyIcon';
+import Select from '../../components/Select';
 import { ethAddressRegEx } from '../../libraries/coin-evm-abstraction/getTransactionStatus';
 import { EvmAbstractionTransaction } from '../../libraries/coin-evm-abstraction/types';
-import CurrencyIcon from '../../components/icons/CurrencyIcon';
-import ArrowDown from '../../components/icons/ArrowDown';
 import type { AccountWithSigners } from '../../types';
-import Select from '../../components/Select';
-import { factoryContract } from '../../contracts';
-import { provider } from '../../providers';
+// import { factoryContract } from '../../contracts';
+// import { provider } from '../../providers';
 import { theme } from '../../config';
 
 type Props = {
@@ -70,25 +70,25 @@ const RecipientStep = ({
       return;
     }
 
-    factoryContract.getAddress(username, domain, 0).then((address: string) => {
-      provider.getCode(address).then((code) => {
-        if (code !== '0x') {
-          setRecipientDomain(recipient);
-          updateTransaction({
-            recipient: address,
-            subAccountId: selectedAccount.type === 'TokenAccount' ? selectedAccount.id : undefined,
-            chainId: mainAccount.currency.ethereumLikeInfo?.chainId,
-          });
-        } else {
-          setRecipientDomain('');
-          updateTransaction({
-            recipient,
-            subAccountId: selectedAccount.type === 'TokenAccount' ? selectedAccount.id : undefined,
-            chainId: mainAccount.currency.ethereumLikeInfo?.chainId,
-          });
-        }
-      });
-    });
+    // factoryContract.getAddress(username, domain, 0).then((address: string) => {
+    //   provider.getCode(address).then((code) => {
+    //     if (code !== '0x') {
+    //       setRecipientDomain(recipient);
+    //       updateTransaction({
+    //         recipient: address,
+    //         subAccountId: selectedAccount.type === 'TokenAccount' ? selectedAccount.id : undefined,
+    //         chainId: mainAccount.currency.ethereumLikeInfo?.chainId,
+    //       });
+    //     } else {
+    //       setRecipientDomain('');
+    //       updateTransaction({
+    //         recipient,
+    //         subAccountId: selectedAccount.type === 'TokenAccount' ? selectedAccount.id : undefined,
+    //         chainId: mainAccount.currency.ethereumLikeInfo?.chainId,
+    //       });
+    //     }
+    //   });
+    // });
   }, [mainAccount.currency.ethereumLikeInfo?.chainId, recipient, selectedAccount, updateTransaction]);
 
   const options = accounts.flatMap((account) => [

@@ -1,14 +1,14 @@
 import { memo } from 'react';
 import ReactDOM from 'react-dom/client';
 import { createBrowserRouter, Outlet, RouterProvider } from 'react-router-dom';
-import ModalContainer from './modals/ModalContainer';
 import Sidebar from './components/Sidebar';
 import TopBar from './components/TopBar';
-import Discover from './views/Discover';
-import Accounts from './views/Accounts';
-import Account from './views/Account';
-import Connect from './views/Connect';
 import './index.css';
+import ModalContainer from './modals/ModalContainer';
+import Account from './views/Account';
+import Accounts from './views/Accounts';
+import Connect from './views/Connect';
+import Discover from './views/Discover';
 
 const AppLayout = memo(() => {
   return (

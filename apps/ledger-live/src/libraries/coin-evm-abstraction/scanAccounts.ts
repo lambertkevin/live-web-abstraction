@@ -1,10 +1,10 @@
-import { Observable } from 'rxjs';
-import { BigNumber } from 'bignumber.js';
+import { getAccountShape } from '@ledgerhq/coin-evm/lib/synchronization';
 import type { Observer } from '@ledgerhq/hw-transport';
 import type { CurrencyBridge, ScanAccountEvent } from '@ledgerhq/types-live';
-import { getAccountShape } from '@ledgerhq/coin-evm/lib/synchronization';
+import { BigNumber } from 'bignumber.js';
+import { Observable } from 'rxjs';
 import type { AccountWithSigners, Signer } from '../../types';
-import { factoryContract } from '../../contracts';
+// import { factoryContract } from '../../contracts';
 
 export const buildScanAccounts: (signer: Signer) => CurrencyBridge['scanAccounts'] =
   (signer: Signer) =>
@@ -21,12 +21,12 @@ export const buildScanAccounts: (signer: Signer) => CurrencyBridge['scanAccounts
       try {
         (async () => {
           if (finished) return;
-          const address = await factoryContract.getAddress(signer.username!, signer.domain!, 0);
+          // const address = await factoryContract.getAddress(signer.username!, signer.domain!, 0);
           const accountShape = await getAccountShape(
             {
               currency,
               index: 0,
-              address,
+              address: '',
               derivationPath: '',
               derivationMode: '',
               deviceId: `${signer.username}.${signer.domain}`,
@@ -37,11 +37,11 @@ export const buildScanAccounts: (signer: Signer) => CurrencyBridge['scanAccounts
             type: 'Account',
             id: '',
             seedIdentifier: `${signer.username}.${signer.domain}`,
-            freshAddress: address,
+            freshAddress: '',
             freshAddressPath: '',
             freshAddresses: [
               {
-                address: address,
+                address: '',
                 derivationPath: '',
               },
             ],
