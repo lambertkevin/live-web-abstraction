@@ -27,7 +27,7 @@
     "@peculiar/asn1-x509": "^2.3.13",
     "@rollup/plugin-inject": "^5.0.5",
     "@simplewebauthn/browser": "^9.0.1",
-    "axios": "^1.6.7",
+    "axios": "^1.6.8",
     "base64url": "^3.0.1",
     "bignumber.js": "^9.1.2",
     "cbor": "^9.0.2",

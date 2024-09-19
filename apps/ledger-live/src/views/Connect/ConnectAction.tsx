@@ -1,13 +1,15 @@
 import { memo } from 'react';
-import LedgerLogo from '../../components/icons/LedgerLogo';
-import CurrencyIcon from '../../components/icons/CurrencyIcon';
-import { AccountWithSigners } from '../../types';
 import type { ACTIONS } from '.';
+import CurrencyIcon from '../../components/icons/CurrencyIcon';
+import LedgerLogo from '../../components/icons/LedgerLogo';
+import { AccountWithSigners } from '../../types';
 
 type Props = {
   origin: string;
   accounts: AccountWithSigners[];
-  selectedAccountId: string;
+  actionId?: string;
+  setActionId?: (id: string) => void;
+  selectedAccountId?: string;
   setSelectedAccountId: (id: string) => void;
   selectedAccount: AccountWithSigners | undefined;
   setConnected: (connected: boolean) => void;
@@ -79,6 +81,7 @@ export const ConnectAction = ({
               type: 'connect:response',
               data: {
                 address: selectedAccount?.freshAddress,
+                chainId: '1',
               },
             });
             sendParentMessage({ type: 'close' });

@@ -60,7 +60,7 @@ importers:
         specifier: ^9.0.1
         version: 9.0.1
       axios:
-        specifier: ^1.6.7
+        specifier: ^1.6.8
         version: 1.6.8
       base64url:
         specifier: ^3.0.1

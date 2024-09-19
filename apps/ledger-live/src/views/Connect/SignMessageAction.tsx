@@ -1,7 +1,6 @@
 import getDeviceEvmTransactionConfig from '@ledgerhq/coin-evm/lib/deviceTransactionConfig';
-import type { Transaction as EvmTransaction } from '@ledgerhq/coin-evm/lib/types/transaction';
 import type { CommonDeviceTransactionField } from '@ledgerhq/coin-framework/lib-es/transaction/common';
-import { BigNumber } from 'bignumber.js';
+import { TypedEvmMessage } from '@ledgerhq/types-live/lib';
 import classNames from 'classnames';
 import isEqual from 'lodash/isEqual';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
@@ -12,7 +11,6 @@ import { SignerOptions } from '../../helpers';
 import { translateError } from '../../helpers/translations';
 import { useBridge } from '../../hooks/useBridge';
 import getDeviceEvmAbstractionTransactionConfig from '../../libraries/coin-evm-abstraction/deviceTransactionConfig';
-import type { EvmAbstractionTransaction } from '../../libraries/coin-evm-abstraction/types';
 import { useAccountsStore, useCurrencyPriceStore } from '../../store';
 import { AccountWithSigners, RawEthersTransaction, Signer } from '../../types';
 
@@ -34,7 +32,7 @@ export const stripHexPrefix = (str: string): string => {
 
 type Props = {
   selectedAccount: AccountWithSigners | undefined;
-  initialTransaction: RawEthersTransaction | undefined;
+  initialMessage: RawEthersTransaction | undefined;
   sendParentMessage: (params: { id?: string; result?: string; type?: string; data?: Record<string, unknown> }) => void;
   setActionName: (actionName: keyof typeof ACTIONS | undefined) => void;
   setActionId?: (id?: string) => void;
@@ -43,14 +41,14 @@ type Props = {
 
 export const SignAction = ({
   selectedAccount,
-  initialTransaction,
+  initialMessage,
   sendParentMessage,
   setActionName,
   setActionId,
   actionId,
 }: Props) => {
   if (!selectedAccount) throw Error('No account selected');
-  if (!initialTransaction) throw Error('No transaction provided');
+  if (!initialMessage) throw Error('No transaction provided');
 
   const { prices } = useCurrencyPriceStore();
 
@@ -65,45 +63,18 @@ export const SignAction = ({
   );
   const [signer, setSigner] = useState<Signer | undefined>();
 
-  const [liveTransaction, setLiveTransaction] = useState<EvmTransaction | EvmAbstractionTransaction | undefined>();
+  const [liveMessage, setLiveMessage] = useState<TypedEvmMessage>();
   useEffect(() => {
-    const newLiveTransaction: EvmTransaction | EvmAbstractionTransaction = isSmartContractAccount
-      ? {
-          family: 'evm-abstraction',
-          mode: 'send',
-          sender: selectedAccount.freshAddress,
-          amount: new BigNumber(initialTransaction.value),
-          recipient: initialTransaction.to!,
-          nonce: -1,
-          callData: initialTransaction.data ? Buffer.from(stripHexPrefix(initialTransaction.data), 'hex') : undefined,
-          callGasLimit: new BigNumber(0),
-          verificationGasLimit: new BigNumber(0),
-          preVerificationGas: new BigNumber(0),
-          maxFeePerGas: new BigNumber(initialTransaction.maxFeePerGas || 0),
-          maxPriorityFeePerGas: new BigNumber(initialTransaction.maxPriorityFeePerGas || 0),
-          signer,
-          chainId: initialTransaction.chainId,
-        }
-      : {
-          family: 'evm',
-          mode: 'send',
-          amount: new BigNumber(0),
-          recipient: initialTransaction.to!,
-          nonce: -1,
-          gasLimit: new BigNumber(0),
-          data: initialTransaction.data ? Buffer.from(stripHexPrefix(initialTransaction.data), 'hex') : undefined,
-          maxFeePerGas: new BigNumber(initialTransaction.maxFeePerGas || 0),
-          maxPriorityFeePerGas: new BigNumber(initialTransaction.maxPriorityFeePerGas || 0),
-          type: 2,
-          // chainId: initialTransaction.chainId,
-        };
+    const newLiveMessage: TypedEvmMessage = {
+      message,
+    };
 
-    if (!isEqual(newLiveTransaction, liveTransaction)) {
-      setLiveTransaction(newLiveTransaction);
+    if (!isEqual(newLiveMessage, liveMessage)) {
+      setLiveMessage(newLiveMessage);
     }
   }, [
-    liveTransaction,
-    initialTransaction,
+    liveMessage,
+    initialMessage,
     isSmartContractAccount,
     selectedAccount.freshAddress,
     selectedAccount.signers,
@@ -113,7 +84,7 @@ export const SignAction = ({
 
   const { bridge, status, transaction, isPending, setIsPending, transport } = useBridge(
     selectedAccount,
-    liveTransaction,
+    undefined,
     signer,
   );
 
