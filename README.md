@@ -1,5 +1,8 @@
 # Ledger Web Abstraction
 
+Ledger Hacktathon creating a web version of Ledger Live, capable of using ERC-4337 to have an EVM experience without using a hardware wallet.
+Using a modified version of @eth-infinitism Bundler and FreshCryptoLib for secp256r1 verification.
+
 ## Installation
 
 1. Clone the repository:
